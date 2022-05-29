@@ -14,3 +14,9 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Easy trip"
 include ':app'
+include ':data'
+include ':domain'
+include ':navigation'
+include ':base-ui'
+include ':common'
+include ':main-ui'
