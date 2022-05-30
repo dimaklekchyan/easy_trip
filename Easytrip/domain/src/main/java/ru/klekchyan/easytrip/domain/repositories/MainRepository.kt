@@ -9,10 +9,21 @@ import ru.klekchyan.easytrip.domain.entities.SimplePlace
 interface MainRepository {
 
     fun getPlaceGeoNameFlow(name: String): Flow<Either<GeoName>>
-    fun getSimplePlacesFlow(
+
+    fun getPlacesByRadiusFlow(
         radius: Double,
         longitude: Double,
-        latitude: Double
+        latitude: Double,
+        kinds: String?
     ): Flow<Either<List<SimplePlace>>>
+
+    fun getPlacesByRadiusAndNameFlow(
+        name: String,
+        radius: Double,
+        longitude: Double,
+        latitude: Double,
+        kinds: String?
+    ): Flow<Either<List<SimplePlace>>>
+
     fun getDetailedPlaceFlow(xid: String): Flow<Either<DetailedPlace>>
 }

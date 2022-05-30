@@ -30,14 +30,35 @@ class MainRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getSimplePlacesFlow(
+    override fun getPlacesByRadiusFlow(
         radius: Double,
         longitude: Double,
-        latitude: Double
+        latitude: Double,
+        kinds: String?
     ): Flow<Either<List<SimplePlace>>> = flow {
         emit(Either.loading())
 
-        val result = openTripMapApi.getPlacesByRadius(radius, longitude, latitude)
+        val result = openTripMapApi.getPlacesByRadius(radius, longitude, latitude, kinds)
+
+        result.onError { code, info ->
+            emit(Either.error(code, info))
+        }
+
+        result.onSuccess { simplePlaces ->
+            emit(Either.success(simplePlaces?.map { it.toDomain() } ?: listOf()))
+        }
+    }
+
+    override fun getPlacesByRadiusAndNameFlow(
+        name: String,
+        radius: Double,
+        longitude: Double,
+        latitude: Double,
+        kinds: String?
+    ): Flow<Either<List<SimplePlace>>> = flow {
+        emit(Either.loading())
+
+        val result = openTripMapApi.getPlacesByRadiusAndName(name, radius, longitude, latitude, kinds)
 
         result.onError { code, info ->
             emit(Either.error(code, info))

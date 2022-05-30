@@ -9,6 +9,8 @@ import ru.klekchyan.easytrip.domain.entities.SimplePlace
 data class SimplePlaceApiEntity(
     val xid: String,
     val name: String,
+    @SerialName("highlighted_name")
+    val highlightedName: String? = null,
     val kinds: String,
     val osm: String? = null,
     val wikidata: String? = null,

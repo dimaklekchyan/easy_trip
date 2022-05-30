@@ -9,7 +9,8 @@ import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
 import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
 import ru.klekchyan.easytrip.domain.useCases.GetGeoNameUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetSimplePlacesUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,12 +19,14 @@ class MainViewModel @Inject constructor(
 ): ViewModel() {
 
     private val getGeoNameUseCase = GetGeoNameUseCase(mainRepository)
-    private val getSimplePlacesUseCase = GetSimplePlacesUseCase(mainRepository)
+    private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(mainRepository)
+    private val getPlacesByRadiusAndNameUseCase = GetPlacesByRadiusAndNameUseCase(mainRepository)
     private val getDetailedPlaceUseCase = GetDetailedPlaceUseCase(mainRepository)
 
     init {
         getGeoName("Moscow")
-        getSimplePlaces(1000.0, 60.6122, 56.8519)
+        getPlacesByRadius(1000.0, 60.6122, 56.8519, null)
+        getPlacesByRadiusAndName("Высоц", 5000.0, 60.6122, 56.8519, "skyscrapers")
         getDetailedPlace("W286786280")
     }
 
@@ -45,22 +48,49 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun getSimplePlaces(
+    fun getPlacesByRadius(
         radius: Double,
         longitude: Double,
-        latitude: Double
+        latitude: Double,
+        kinds: String?
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            getSimplePlacesUseCase(radius, longitude, latitude).collect { state ->
+            getPlacesByRadiusUseCase(radius, longitude, latitude, kinds).collect { state ->
                 when(state) {
-                    is GetSimplePlacesUseCase.State.Loading -> {
+                    is GetPlacesByRadiusUseCase.State.Loading -> {
                         Log.d("TAG2", "loading")
                     }
-                    is GetSimplePlacesUseCase.State.Error -> {
+                    is GetPlacesByRadiusUseCase.State.Error -> {
                         Log.d("TAG2", "error")
                     }
-                    is GetSimplePlacesUseCase.State.Success -> {
+                    is GetPlacesByRadiusUseCase.State.Success -> {
                         Log.d("TAG2", "success ${state.places.size}")
+                        state.places.filter { it.name.isNotEmpty() }.forEach {
+                            Log.d("TAG2", "$it")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun getPlacesByRadiusAndName(
+        name: String,
+        radius: Double,
+        longitude: Double,
+        latitude: Double,
+        kinds: String?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            getPlacesByRadiusAndNameUseCase(name, radius, longitude, latitude, kinds).collect { state ->
+                when(state) {
+                    is GetPlacesByRadiusAndNameUseCase.State.Loading -> {
+                        Log.d("TAG2", "loading")
+                    }
+                    is GetPlacesByRadiusAndNameUseCase.State.Error -> {
+                        Log.d("TAG2", "error")
+                    }
+                    is GetPlacesByRadiusAndNameUseCase.State.Success -> {
 //                        state.places.filter { it.name.isNotEmpty() }.forEach {
 //                            Log.d("TAG2", "$it")
 //                        }

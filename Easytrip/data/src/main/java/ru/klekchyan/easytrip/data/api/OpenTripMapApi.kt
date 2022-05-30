@@ -31,13 +31,42 @@ class OpenTripMapApi @Inject constructor(
     suspend fun getPlacesByRadius(
         radius: Double,
         longitude: Double,
-        latitude: Double
+        latitude: Double,
+        kinds: String?
     ): Either<List<SimplePlaceApiEntity>> {
         return try {
             val result = openTripMapService.getPlacesByRadius(
                 radius = radius,
                 longitude = longitude,
-                latitude = latitude
+                latitude = latitude,
+                kinds = kinds
+            )
+
+            if (result.isSuccessful) {
+                val places = result.body() as List<SimplePlaceApiEntity>
+                Either.success(places)
+            } else {
+                Either.error(AppError.Unknown().code, AppError.Unknown().message())
+            }
+        } catch (e: Exception) {
+            Either.error(AppError.Unknown().code, AppError.Unknown().message())
+        }
+    }
+
+    suspend fun getPlacesByRadiusAndName(
+        name: String,
+        radius: Double,
+        longitude: Double,
+        latitude: Double,
+        kinds: String?
+    ): Either<List<SimplePlaceApiEntity>> {
+        return try {
+            val result = openTripMapService.getPlacesByRadiusAndName(
+                name = name,
+                radius = radius,
+                longitude = longitude,
+                latitude = latitude,
+                kinds = kinds
             )
 
             if (result.isSuccessful) {
