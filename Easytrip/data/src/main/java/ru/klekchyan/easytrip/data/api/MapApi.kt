@@ -2,7 +2,9 @@ package ru.klekchyan.easytrip.data.api
 
 import ru.klekchyan.easytrip.common.AppError
 import ru.klekchyan.easytrip.common.Either
-import ru.klekchyan.easytrip.data.api.services.OpenTripMapService
+import ru.klekchyan.easytrip.data.api.services.BaseMapService
+import ru.klekchyan.easytrip.data.api.services.CatalogMapService
+import ru.klekchyan.easytrip.data.apiEntities.CatalogApiEntity
 import ru.klekchyan.easytrip.data.apiEntities.DetailedPlaceApiEntity
 import ru.klekchyan.easytrip.data.apiEntities.GeoNameApiEntity
 import ru.klekchyan.easytrip.data.apiEntities.SimplePlaceApiEntity
@@ -10,12 +12,36 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class OpenTripMapApi @Inject constructor(
-    private val openTripMapService: OpenTripMapService
+class MapApi @Inject constructor(
+    private val baseMapService: BaseMapService,
+    private val catalogMapService: CatalogMapService
 ) {
-    suspend fun getPlacesGeoName(name: String): Either<GeoNameApiEntity> {
+
+    suspend fun getCatalog(language: String): Either<CatalogApiEntity> {
         return try {
-            val result = openTripMapService.getPlacesGeoName(name = name)
+            val result = if(language == "ru") {
+                catalogMapService.getRussianCatalog()
+            } else {
+                catalogMapService.getEnglishCatalog()
+            }
+
+            if (result.isSuccessful) {
+                val catalog = result.body() as CatalogApiEntity
+                Either.success(catalog)
+            } else {
+                Either.error(AppError.Unknown().code, AppError.Unknown().message())
+            }
+        } catch (e: Exception) {
+            Either.error(AppError.Unknown().code, AppError.Unknown().message())
+        }
+    }
+
+    suspend fun getPlacesGeoName(name: String, language: String): Either<GeoNameApiEntity> {
+        return try {
+            val result = baseMapService.getPlacesGeoName(
+                name = name,
+                lang = if(language == "ru") "ru" else "en"
+            )
 
             if (result.isSuccessful) {
                 val geoName = result.body() as GeoNameApiEntity
@@ -32,14 +58,16 @@ class OpenTripMapApi @Inject constructor(
         radius: Double,
         longitude: Double,
         latitude: Double,
-        kinds: String?
+        kinds: String?,
+        language: String
     ): Either<List<SimplePlaceApiEntity>> {
         return try {
-            val result = openTripMapService.getPlacesByRadius(
+            val result = baseMapService.getPlacesByRadius(
                 radius = radius,
                 longitude = longitude,
                 latitude = latitude,
-                kinds = kinds
+                kinds = kinds,
+                lang = if(language == "ru") "ru" else "en"
             )
 
             if (result.isSuccessful) {
@@ -58,15 +86,17 @@ class OpenTripMapApi @Inject constructor(
         radius: Double,
         longitude: Double,
         latitude: Double,
-        kinds: String?
+        kinds: String?,
+        language: String
     ): Either<List<SimplePlaceApiEntity>> {
         return try {
-            val result = openTripMapService.getPlacesByRadiusAndName(
+            val result = baseMapService.getPlacesByRadiusAndName(
                 name = name,
                 radius = radius,
                 longitude = longitude,
                 latitude = latitude,
-                kinds = kinds
+                kinds = kinds,
+                lang = if(language == "ru") "ru" else "en"
             )
 
             if (result.isSuccessful) {
@@ -80,9 +110,12 @@ class OpenTripMapApi @Inject constructor(
         }
     }
 
-    suspend fun getDetailedPlace(xid: String): Either<DetailedPlaceApiEntity> {
+    suspend fun getDetailedPlace(xid: String, language: String): Either<DetailedPlaceApiEntity> {
         return try {
-            val result = openTripMapService.getDetailedPlace(xid = xid)
+            val result = baseMapService.getDetailedPlace(
+                xid = xid,
+                lang = if(language == "ru") "ru" else "en"
+            )
 
             if (result.isSuccessful) {
                 val place = result.body() as DetailedPlaceApiEntity

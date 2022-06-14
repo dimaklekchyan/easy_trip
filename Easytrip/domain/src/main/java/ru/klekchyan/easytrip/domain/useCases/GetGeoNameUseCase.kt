@@ -9,15 +9,9 @@ class GetGeoNameUseCase(
 ) {
     operator fun invoke(name: String) = mainRepository.getPlaceGeoNameFlow(name).map {
         when {
-            it.isLoading() -> {
-                State.Loading
-            }
-            it.isError() -> {
-                State.Error(it.errorInfo)
-            }
-            else -> {
-                State.Success(it.data!!)
-            }
+            it.isLoading() -> State.Loading
+            it.isError() -> State.Error(it.errorInfo)
+            else -> State.Success(it.data!!)
         }
     }
 

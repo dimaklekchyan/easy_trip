@@ -3,14 +3,13 @@ package ru.klekchyan.easytrip.data.apiEntities
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
+import ru.klekchyan.easytrip.domain.entities.PlaceAddress
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 
 @Serializable
 data class SimplePlaceApiEntity(
     val xid: String,
     val name: String,
-    @SerialName("highlighted_name")
-    val highlightedName: String? = null,
     val kinds: String,
     val osm: String? = null,
     val wikidata: String? = null,
@@ -43,14 +42,10 @@ data class DetailedPlaceApiEntity(
     val wikipedia: String? = null,
     @SerialName("wikipedia_extracts")
     val wikipediaExtracts: WikipediaExtracts? = null,
-    val voyage: String? = null,
     val url: String? = null,
     val otm: String,
-    val sources: PlaceSource,
-    val info: PlaceInfo? = null,
-    val bbox: Bbox? = null,
     val point: GeoPoint? = null,
-    val address: PlaceAddress? = null
+    val address: PlaceAddressApiEntity? = null
 ) {
     fun toDomain() = DetailedPlace(
         xid = xid,
@@ -68,7 +63,8 @@ data class DetailedPlaceApiEntity(
         url = url,
         otm = otm,
         longitude = point?.longitude,
-        latitude = point?.latitude
+        latitude = point?.latitude,
+        address = address?.toDomain()
     )
 }
 
@@ -95,42 +91,22 @@ data class WikipediaExtracts(
 )
 
 @Serializable
-data class PlaceSource(
-    val geometry: String,
-    val attributes: List<String>
-)
-
-@Serializable
-data class PlaceInfo(
-    val src: String,
-    @SerialName("src_id")
-    val srcId: Int,
-    val descr: String,
-    val image: String,
-    @SerialName("img_width")
-    val imageWidth: Int,
-    @SerialName("img_height")
-    val imageHeight: Int,
-)
-
-@Serializable
-data class Bbox(
-    val lon_min: Double,
-    val lon_max: Double,
-    val lat_min: Double,
-    val lat_max: Double,
-)
-
-@Serializable
-data class PlaceAddress(
-    val road: String,
-    val town: String,
-    val state: String,
-    val county: String,
-    val country: String,
-    val postcode: String,
-    @SerialName("country_code")
-    val countryCode: String,
+data class PlaceAddressApiEntity(
+    val road: String? = null,
+    val town: String? = null,
+    val city: String? = null,
+    val suburb: String? = null,
+    val state: String? = null,
+    val county: String? = null,
+    val country: String? = null,
     @SerialName("house_number")
-    val houseNumber: String
-)
+    val houseNumber: String? = null,
+    @SerialName("city_district")
+    val cityDistrict: String? = null,
+    @SerialName("state_district")
+    val stateDistrict: String? = null
+) {
+    fun toDomain() = PlaceAddress(
+        road, town, city, suburb, state, county, country, houseNumber, cityDistrict, stateDistrict
+    )
+}

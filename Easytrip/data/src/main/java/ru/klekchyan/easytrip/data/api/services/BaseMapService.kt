@@ -8,7 +8,7 @@ import ru.klekchyan.easytrip.data.apiEntities.DetailedPlaceApiEntity
 import ru.klekchyan.easytrip.data.apiEntities.GeoNameApiEntity
 import ru.klekchyan.easytrip.data.apiEntities.SimplePlaceApiEntity
 
-interface OpenTripMapService {
+interface BaseMapService {
 
     @GET("{lang}/places/geoname")
     suspend fun getPlacesGeoName(

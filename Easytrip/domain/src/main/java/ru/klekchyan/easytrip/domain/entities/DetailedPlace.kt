@@ -17,4 +17,18 @@ data class DetailedPlace(
     val otm: String,
     val longitude: Double? = null,
     val latitude: Double? = null,
+    val address: PlaceAddress? = null
+)
+
+data class PlaceAddress(
+    val road: String? = null,
+    val town: String? = null,
+    val city: String? = null,
+    val suburb: String? = null,
+    val state: String? = null,
+    val county: String? = null,
+    val country: String? = null,
+    val houseNumber: String? = null,
+    val cityDistrict: String? = null,
+    val stateDistrict: String? = null
 )

@@ -1,7 +1,7 @@
 buildscript {
     ext {
         compose_version = '1.2.0-beta02'
-        map_kit_version = '3.5.0'
+        yandex_mapkit_version = '4.1.0-lite'
         accompanist_version = '0.23.1'
         view_model_compose_version = '2.4.0-rc01'
         navigation_compose_version = '2.4.1'

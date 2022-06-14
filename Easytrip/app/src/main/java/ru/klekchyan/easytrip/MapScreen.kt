@@ -26,20 +26,19 @@ import com.yandex.mapkit.mapview.MapView
 import kotlinx.coroutines.delay
 
 
+//Just example of using LocationManager
+
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
-    mapView: MapView?,
-    onMapCreated: (mapView: MapView) -> Unit
+    mapView: MapView?
 ) {
     val locationManager = getSystemService(LocalContext.current, LocationManager::class.java) as LocationManager
 
     val hasGps = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     val hasNetwork = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-
-    var cameraPosition by rememberSaveable { mutableStateOf<CameraPosition?>(null) }
 
     val locationPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -83,19 +82,5 @@ fun MapScreen(
         if(!locationPermissionState.allPermissionsGranted && !locationPermissionState.permissionRequested) {
             locationPermissionState.launchMultiplePermissionRequest()
         }
-    }
-
-    if(locationPermissionState.allPermissionsGranted) {
-        AndroidView(
-            factory = {
-                val newMapView = MapView(it)
-                newMapView.map.addCameraListener { map, cameraPosition, cameraUpdateSource, b ->
-                    Log.d("TAG2", "position from Map: ${cameraPosition.target.latitude} ${cameraPosition.target.longitude}")
-                }
-                onMapCreated(newMapView)
-                newMapView
-            },
-            modifier = Modifier.fillMaxSize()
-        )
     }
 }

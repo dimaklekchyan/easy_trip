@@ -2,11 +2,14 @@ package ru.klekchyan.easytrip.domain.repositories
 
 import kotlinx.coroutines.flow.Flow
 import ru.klekchyan.easytrip.common.Either
+import ru.klekchyan.easytrip.domain.entities.Catalog
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.GeoName
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 
 interface MainRepository {
+
+    fun getCatalogFlow(): Flow<Either<Catalog>>
 
     fun getPlaceGeoNameFlow(name: String): Flow<Either<GeoName>>
 

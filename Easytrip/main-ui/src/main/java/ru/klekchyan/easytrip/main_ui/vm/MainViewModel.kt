@@ -6,11 +6,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ru.klekchyan.easytrip.domain.entities.Catalog
+import ru.klekchyan.easytrip.domain.entities.CatalogChild
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
-import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetGeoNameUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
+import ru.klekchyan.easytrip.domain.useCases.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,12 +21,41 @@ class MainViewModel @Inject constructor(
     private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(mainRepository)
     private val getPlacesByRadiusAndNameUseCase = GetPlacesByRadiusAndNameUseCase(mainRepository)
     private val getDetailedPlaceUseCase = GetDetailedPlaceUseCase(mainRepository)
+    private val getCatalogUseCase = GetCatalogUseCase(mainRepository)
+
+    val mapController = MapController(
+        scope = viewModelScope,
+        getPlacesByRadiusUseCase = getPlacesByRadiusUseCase,
+        getPlacesByRadiusAndNameUseCase = getPlacesByRadiusAndNameUseCase,
+        getDetailedPlaceUseCase = getDetailedPlaceUseCase
+    )
+
+    val categories = mutableListOf<String>()
 
     init {
-        getGeoName("Moscow")
-        getPlacesByRadius(1000.0, 60.6122, 56.8519, null)
-        getPlacesByRadiusAndName("Высоц", 5000.0, 60.6122, 56.8519, "skyscrapers")
-        getDetailedPlace("W286786280")
+        //getGeoName("Ekaterinburg")
+        //getPlacesByRadius(10000.0, 60.6122, 56.8519, "wall_painting")
+//        getPlacesByRadiusAndName("Высоц", 5000.0, 60.6122, 56.8519, "skyscrapers")
+        //getDetailedPlace("W286786280")
+        getCatalog()
+    }
+
+    fun getCatalog() {
+        viewModelScope.launch(Dispatchers.IO) {
+            getCatalogUseCase().collect { state ->
+                when(state) {
+                    is GetCatalogUseCase.State.Loading -> {}
+                    is GetCatalogUseCase.State.Error -> {}
+                    is GetCatalogUseCase.State.Success -> {
+                        getAllFinishedCategories(state.catalog.children)
+//                        categories.forEach {
+//                            Log.d("TAG2", it)
+//                        }
+                        Log.d("TAG2", "${categories.size}")
+                    }
+                }
+            }
+        }
     }
 
     fun getGeoName(name: String) {
@@ -65,7 +93,7 @@ class MainViewModel @Inject constructor(
                     }
                     is GetPlacesByRadiusUseCase.State.Success -> {
                         Log.d("TAG2", "success ${state.places.size}")
-                        state.places.filter { it.name.isNotEmpty() }.forEach {
+                        state.places.forEach {
                             Log.d("TAG2", "$it")
                         }
                     }
@@ -114,6 +142,18 @@ class MainViewModel @Inject constructor(
                         Log.d("TAG2", "getDetailedPlace success ${state.place}")
                     }
                 }
+            }
+        }
+    }
+
+    private fun getAllFinishedCategories(children: List<CatalogChild>) {
+        children.forEach {
+            if (it.children.isNullOrEmpty()) {
+                Log.d("TAG2", "Add ${it.id}")
+                categories.add(it.id)
+            } else {
+                Log.d("TAG2", "Go deeper ${it.id}")
+                getAllFinishedCategories(it.children!!)
             }
         }
     }

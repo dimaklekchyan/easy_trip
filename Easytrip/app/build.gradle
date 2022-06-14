@@ -68,7 +68,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:30.0.2')
 
     //Yandex map
-    implementation("com.yandex.android:mapkit:$map_kit_version")
+    implementation "com.yandex.android:maps.mobile:$yandex_mapkit_version"
 
     //Accompanist
     implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"

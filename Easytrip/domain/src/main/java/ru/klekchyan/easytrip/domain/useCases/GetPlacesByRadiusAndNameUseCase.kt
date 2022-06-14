@@ -16,15 +16,9 @@ class GetPlacesByRadiusAndNameUseCase(
         kinds: String?
     ) = mainRepository.getPlacesByRadiusAndNameFlow(name, radius, longitude, latitude, kinds).map {
         when {
-            it.isLoading() -> {
-                State.Loading
-            }
-            it.isError() -> {
-                State.Error(it.errorInfo)
-            }
-            else -> {
-                State.Success(it.data!!)
-            }
+            it.isLoading() -> State.Loading
+            it.isError() -> State.Error(it.errorInfo)
+            else -> State.Success(it.data!!)
         }
     }
 
