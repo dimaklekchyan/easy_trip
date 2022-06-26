@@ -4,18 +4,21 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
@@ -26,48 +29,47 @@ fun Map(
     vm: MainViewModel
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current.density
 
-    val currentPlaces = vm.mapController.currentPlaces
+    LaunchedEffect(Unit) {
+        vm.mapController.setNewDensity(density)
+    }
 
     val mapView by remember {
         mutableStateOf(
             MapView(context).apply {
+                val clusterizedCollection = map.mapObjects.addClusterizedPlacemarkCollection(vm.mapController)
+
                 vm.mapController.setOnAddPlaceMark { place ->
-//                    map.mapObjects.addPlacemark(
-//                        Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
-//                        //ImageProvider.fromBitmap()
-//                    ).apply {
-//                        userData = place
-//                        addTapListener { mapObject, _ ->
-//                            vm.mapController.onPlaceMarkClick(mapObject.userData as SimplePlace)
-//                            true
-//                        }
-//                    }
+
+                    var listener: MapObjectTapListener = MapObjectTapListener { _, _ -> false }
+
+                    val bitmap = drawPlaceMark(place)
+                    clusterizedCollection.addPlacemark(
+                        Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
+                        ImageProvider.fromBitmap(bitmap),
+                    ).apply {
+
+                        listener = MapObjectTapListener { mapObject, _ ->
+                            vm.mapController.onPlaceMarkClick(mapObject.userData as SimplePlace)
+                            Toast.makeText(context, (mapObject.userData as SimplePlace).name, Toast.LENGTH_SHORT).show()
+                            true
+                        }
+
+                        this.userData = place
+                        this.addTapListener(listener)
+                    }
+                    listener
                 }
+
                 vm.mapController.setOnDeletePlaceMarks {
-                    map.mapObjects.clear()
-                    map
+                    clusterizedCollection.clear()
+                }
+                vm.mapController.setOnClusterPlaceMarks {
+                    clusterizedCollection.clusterPlacemarks(60.0, 14)
                 }
             }
         )
-    }
-
-    LaunchedEffect(key1 = currentPlaces) {
-        currentPlaces.forEach { place ->
-            val bitmap = drawPlaceMark(place)
-
-            mapView.map.mapObjects.addPlacemark(
-                Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
-                ImageProvider.fromBitmap(bitmap)
-            ).apply {
-                userData = place
-                addTapListener { mapObject, _ ->
-                    vm.mapController.onPlaceMarkClick(mapObject.userData as SimplePlace)
-                    false
-                }
-            }
-        }
     }
 
     DisposableEffect(key1 = Unit) {
@@ -82,6 +84,7 @@ fun Map(
         )
 
         onDispose {
+            mapView.map.mapObjects.clear()
             mapView.onStop()
         }
     }
@@ -91,7 +94,7 @@ fun Map(
         contentAlignment = Alignment.Center
     ) {
         AndroidView(
-            factory = { context ->
+            factory = { _ ->
                 mapView
             },
             modifier = Modifier.fillMaxSize()

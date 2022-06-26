@@ -9,8 +9,8 @@ class GetPlacesByRadiusAndNameUseCase(
 ) {
 
     operator fun invoke(
-        name: String,
         radius: Double,
+        name: String,
         longitude: Double,
         latitude: Double,
         kinds: String?
