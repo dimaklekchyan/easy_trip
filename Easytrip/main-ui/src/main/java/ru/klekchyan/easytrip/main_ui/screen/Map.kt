@@ -1,12 +1,14 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
+import android.Manifest
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +17,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionState
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
@@ -22,66 +27,50 @@ import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
-import ru.klekchyan.easytrip.main_ui.vm.MainViewModel
+import ru.klekchyan.easytrip.main_ui.vm.MapController
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun Map(
-    vm: MainViewModel
+    modifier: Modifier = Modifier,
+    mapController: MapController
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current.density
 
-    LaunchedEffect(Unit) {
-        vm.mapController.setNewDensity(density)
-    }
+    val userLocation = mapController.userLocation
 
-    val mapView by remember {
-        mutableStateOf(
-            MapView(context).apply {
-                val clusterizedCollection = map.mapObjects.addClusterizedPlacemarkCollection(vm.mapController)
-
-                vm.mapController.setOnAddPlaceMark { place ->
-
-                    var listener: MapObjectTapListener = MapObjectTapListener { _, _ -> false }
-
-                    val bitmap = drawPlaceMark(place)
-                    clusterizedCollection.addPlacemark(
-                        Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
-                        ImageProvider.fromBitmap(bitmap),
-                    ).apply {
-
-                        listener = MapObjectTapListener { mapObject, _ ->
-                            vm.mapController.onPlaceMarkClick(mapObject.userData as SimplePlace)
-                            Toast.makeText(context, (mapObject.userData as SimplePlace).name, Toast.LENGTH_SHORT).show()
-                            true
-                        }
-
-                        this.userData = place
-                        this.addTapListener(listener)
-                    }
-                    listener
-                }
-
-                vm.mapController.setOnDeletePlaceMarks {
-                    clusterizedCollection.clear()
-                }
-                vm.mapController.setOnClusterPlaceMarks {
-                    clusterizedCollection.clusterPlacemarks(60.0, 14)
-                }
-            }
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            //Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
         )
+    )
+
+    SideEffect {
+        if(!locationPermissionState.allPermissionsGranted) {
+            Log.d("TAG2", "opposite! allPermissionsGranted")
+            locationPermissionState.launchMultiplePermissionRequest()
+        } else {
+            Log.d("TAG2", "1 allPermissionsGranted")
+            mapController.getUserLocation()
+        }
     }
+
+    LaunchedEffect(key1 = locationPermissionState.allPermissionsGranted) {
+        if(locationPermissionState.allPermissionsGranted) mapController.getUserLocation()
+    }
+
+    LaunchedEffect(key1 = userLocation) {
+        mapController.moveToUserLocation()
+    }
+
+    val mapView by remember { mutableStateOf(context.createMapView(mapController)) }
 
     DisposableEffect(key1 = Unit) {
         mapView.onStart()
-        mapView.map.addCameraListener(vm.mapController)
-
-        //TODO add request of current location
-        mapView.map.move(
-            CameraPosition(Point(56.8519, 60.6122), 14f, 0f, 0f),
-            Animation(Animation.Type.SMOOTH, 2f),
-            null
-        )
+        mapView.map.addCameraListener(mapController)
+        mapController.setNewDensity(density)
 
         onDispose {
             mapView.map.mapObjects.clear()
@@ -90,15 +79,55 @@ fun Map(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         AndroidView(
-            factory = { _ ->
-                mapView
-            },
+            factory = { mapView },
             modifier = Modifier.fillMaxSize()
         )
+    }
+}
+
+internal fun Context.createMapView(mapController: MapController): MapView {
+    return MapView(this).apply {
+        val clusterizedCollection = map.mapObjects.addClusterizedPlacemarkCollection(mapController)
+
+        mapController.setOnAddPlaceMark { place ->
+
+            var listener: MapObjectTapListener = MapObjectTapListener { _, _ -> false }
+
+            val bitmap = drawPlaceMark(place)
+            clusterizedCollection.addPlacemark(
+                Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
+                ImageProvider.fromBitmap(bitmap),
+            ).apply {
+
+                listener = MapObjectTapListener { mapObject, _ ->
+                    mapController.onPlaceMarkClick(mapObject.userData as SimplePlace)
+                    Toast.makeText(context, (mapObject.userData as SimplePlace).name, Toast.LENGTH_SHORT).show()
+                    true
+                }
+
+                this.userData = place
+                this.addTapListener(listener)
+            }
+            listener
+        }
+
+        mapController.setOnDeletePlaceMarks {
+            clusterizedCollection.clear()
+        }
+        mapController.setOnClusterPlaceMarks {
+            clusterizedCollection.clusterPlacemarks(60.0, 14)
+        }
+        mapController.setOnMoveTo { point, zoom ->
+            map.move(
+                CameraPosition(point, zoom, 0f, 0f),
+                Animation(Animation.Type.SMOOTH, 2f),
+                null
+            )
+        }
     }
 }
 

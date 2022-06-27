@@ -24,6 +24,7 @@ import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.SizeChangedListener
 import com.yandex.mapkit.mapview.MapView
 import kotlinx.coroutines.delay
+import ru.klekchyan.easytrip.main_ui.vm.MapController
 
 
 //Just example of using LocationManager
@@ -33,6 +34,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun MapScreen(
     modifier: Modifier = Modifier,
+    mapController: MapController,
     mapView: MapView?
 ) {
     val locationManager = getSystemService(LocalContext.current, LocationManager::class.java) as LocationManager
@@ -79,7 +81,7 @@ fun MapScreen(
     }
 
     SideEffect {
-        if(!locationPermissionState.allPermissionsGranted && !locationPermissionState.permissionRequested) {
+        if(!locationPermissionState.allPermissionsGranted) {
             locationPermissionState.launchMultiplePermissionRequest()
         }
     }

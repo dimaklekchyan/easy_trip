@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 32
 
     defaultConfig {
         minSdk 26
-        targetSdk 31
+        targetSdk 32
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -53,6 +53,9 @@ dependencies {
 
     //Yandex map
     implementation "com.yandex.android:maps.mobile:$yandex_mapkit_version"
+
+    //Accompanist
+    implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"
 
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.material:material:$compose_version"

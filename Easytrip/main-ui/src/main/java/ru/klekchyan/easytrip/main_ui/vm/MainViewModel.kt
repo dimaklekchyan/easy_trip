@@ -1,8 +1,10 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.entities.CatalogChild
@@ -12,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    mainRepository: MainRepository
+    mainRepository: MainRepository,
+    @ApplicationContext context: Context
 ): ViewModel() {
 
     private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(mainRepository)
@@ -22,6 +25,7 @@ class MainViewModel @Inject constructor(
 
     val mapController = MapController(
         scope = viewModelScope,
+        context = context,
         getPlacesByRadiusUseCase = getPlacesByRadiusUseCase,
         getPlacesByRadiusAndNameUseCase = getPlacesByRadiusAndNameUseCase,
         getDetailedPlaceUseCase = getDetailedPlaceUseCase

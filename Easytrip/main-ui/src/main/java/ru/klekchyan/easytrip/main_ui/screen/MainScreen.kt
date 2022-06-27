@@ -9,6 +9,6 @@ fun MainScreen(
     vm: MainViewModel
 ) {
 
-    Text(text = "MainScreen")
+    Map(mapController = vm.mapController)
 
 }

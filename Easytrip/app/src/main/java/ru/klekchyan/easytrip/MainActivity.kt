@@ -11,6 +11,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.AndroidEntryPoint
 import ru.klekchyan.easytrip.base_ui.theme.EasyTripTheme
+import ru.klekchyan.easytrip.main_ui.screen.MainScreen
 import ru.klekchyan.easytrip.main_ui.screen.Map
 
 @AndroidEntryPoint
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
-                    Map(hiltViewModel())
+                    MainScreen(hiltViewModel())
                 }
             }
         }
