@@ -1,6 +1,7 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
-import android.Manifest
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -9,6 +10,8 @@ import android.graphics.Paint
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +29,9 @@ import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import ru.klekchyan.easytrip.common.LocationRequester
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.main_ui.vm.MapController
 
@@ -36,33 +42,27 @@ fun Map(
     mapController: MapController
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val density = LocalDensity.current.density
-
-    val userLocation = mapController.userLocation
 
     val locationPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(
-            //Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION
+            ACCESS_COARSE_LOCATION,
+            ACCESS_FINE_LOCATION
         )
     )
 
-    SideEffect {
-        if(!locationPermissionState.allPermissionsGranted) {
-            Log.d("TAG2", "opposite! allPermissionsGranted")
-            locationPermissionState.launchMultiplePermissionRequest()
-        } else {
-            Log.d("TAG2", "1 allPermissionsGranted")
-            mapController.getUserLocation()
+    LaunchedEffect(key1 = locationPermissionState.allPermissionsGranted) {
+        if(locationPermissionState.allPermissionsGranted) {
+            (context as LocationRequester).requestLocationUpdates()
         }
     }
-
-    LaunchedEffect(key1 = locationPermissionState.allPermissionsGranted) {
-        if(locationPermissionState.allPermissionsGranted) mapController.getUserLocation()
-    }
-
-    LaunchedEffect(key1 = userLocation) {
-        mapController.moveToUserLocation()
+    
+    LaunchedEffect(key1 = locationPermissionState.revokedPermissions) {
+        val coarsePermissionGranted = locationPermissionState.revokedPermissions.none { it.permission == ACCESS_COARSE_LOCATION }
+        if(coarsePermissionGranted) {
+            (context as LocationRequester).requestLocationUpdates()
+        }
     }
 
     val mapView by remember { mutableStateOf(context.createMapView(mapController)) }
@@ -71,6 +71,14 @@ fun Map(
         mapView.onStart()
         mapView.map.addCameraListener(mapController)
         mapController.setNewDensity(density)
+
+        if(locationPermissionState.allPermissionsGranted) {
+            Log.d("TAG2", "disposable granted")
+            scope.launch {
+                delay(5000)
+                (context as LocationRequester).requestLocationUpdates()
+            }
+        }
 
         onDispose {
             mapView.map.mapObjects.clear()
@@ -86,6 +94,18 @@ fun Map(
             factory = { mapView },
             modifier = Modifier.fillMaxSize()
         )
+
+        Button(
+            onClick = {
+                if(locationPermissionState.allPermissionsGranted) {
+                    mapController.moveToUserLocation()
+                } else {
+                    locationPermissionState.launchMultiplePermissionRequest()
+                }
+            }
+        ) {
+            Text(text = "Текущее местоположение")
+        }
     }
 }
 

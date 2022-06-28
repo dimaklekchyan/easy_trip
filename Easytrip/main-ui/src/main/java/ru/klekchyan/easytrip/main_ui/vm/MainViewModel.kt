@@ -1,21 +1,21 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.entities.CatalogChild
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
-import ru.klekchyan.easytrip.domain.useCases.*
+import ru.klekchyan.easytrip.domain.useCases.GetCatalogUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    mainRepository: MainRepository,
-    @ApplicationContext context: Context
+    mainRepository: MainRepository
 ): ViewModel() {
 
     private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(mainRepository)
@@ -25,7 +25,6 @@ class MainViewModel @Inject constructor(
 
     val mapController = MapController(
         scope = viewModelScope,
-        context = context,
         getPlacesByRadiusUseCase = getPlacesByRadiusUseCase,
         getPlacesByRadiusAndNameUseCase = getPlacesByRadiusAndNameUseCase,
         getDetailedPlaceUseCase = getDetailedPlaceUseCase

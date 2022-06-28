@@ -1,17 +1,16 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.location.LocationManager
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.core.content.ContextCompat
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.*
 import com.yandex.mapkit.map.Map
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
@@ -22,22 +21,16 @@ import ru.klekchyan.easytrip.main_ui.utils.getDeltaBetweenPoints
 
 class MapController(
     private val scope: CoroutineScope,
-    private val context: Context,
     private val getPlacesByRadiusUseCase: GetPlacesByRadiusUseCase,
     private val getPlacesByRadiusAndNameUseCase: GetPlacesByRadiusAndNameUseCase,
     private val getDetailedPlaceUseCase: GetDetailedPlaceUseCase,
 ): CameraListener, ClusterListener, ClusterTapListener {
 
-    private val locationManager = ContextCompat.getSystemService(context, LocationManager::class.java) as LocationManager
-    private val hasGps = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-    private val hasNetwork = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-
     private var density by mutableStateOf<Float>(1f)
 
     var currentDetailedPlace by mutableStateOf<DetailedPlace?>(null)
         private set
-    var userLocation by mutableStateOf<Point?>(null)
-        private set
+    private var userLocation by mutableStateOf<Point?>(null)
     private var currentRadius by mutableStateOf<Double>(0.0)
     private var lastPoint by mutableStateOf<Point>(Point(0.0, 0.0))
     private var currentPoint by mutableStateOf<Point>(Point(0.0, 0.0))
@@ -51,8 +44,6 @@ class MapController(
     private var onClusterPlaceMarks: () -> Unit = {}
 
     private var listeners by mutableStateOf<List<MapObjectTapListener>>(listOf())
-
-    private var needToMoveToUserLocation by mutableStateOf(true)
 
     fun setOnMoveTo(callback: (point: Point, zoom: Float) -> Unit) {
         onMoveTo = callback
@@ -89,37 +80,10 @@ class MapController(
         )
     }
 
-    @SuppressLint("MissingPermission")
-    fun getUserLocation() {
-        if(hasGps) {
-            Log.d("TAG2", "hasGps")
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                5000,
-                0f
-            ) {
-                Log.d("TAG2", "${it.longitude} ${it.latitude}")
-                userLocation = Point(it.latitude, it.longitude)
-            }
-        }
-        if(hasNetwork) {
-            Log.d("TAG2", "hasNetwork")
-            locationManager.requestLocationUpdates(
-                LocationManager.NETWORK_PROVIDER,
-                5000,
-                0f
-            ) {
-                Log.d("TAG2", "${it.longitude} ${it.latitude}")
-                userLocation = Point(it.latitude, it.longitude)
-            }
-        }
-    }
-
     fun moveToUserLocation() {
         userLocation?.let {
             onMoveTo(it, 14f)
         }
-        needToMoveToUserLocation = false
     }
 
     override fun onCameraPositionChanged(
@@ -245,6 +209,7 @@ class MapController(
                     is GetDetailedPlaceUseCase.State.Success -> {
                         withContext(Dispatchers.Main) {
                             currentDetailedPlace = state.place
+                            Log.d("TAG2", "${currentDetailedPlace}")
                         }
                     }
                 }

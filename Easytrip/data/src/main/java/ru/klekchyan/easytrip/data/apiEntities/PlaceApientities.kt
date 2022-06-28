@@ -44,23 +44,25 @@ data class DetailedPlaceApiEntity(
     val wikipediaExtracts: WikipediaExtracts? = null,
     val url: String? = null,
     val otm: String,
+    val info: PlaceInfoApiEntity? = null,
     val point: GeoPoint? = null,
     val address: PlaceAddressApiEntity? = null
 ) {
     fun toDomain() = DetailedPlace(
         xid = xid,
         name = name,
+        description = info?.description ?: "",
         kinds = kinds,
-        osm = osm,
-        wikidata = wikidata,
+        osm = osm ?: "",
+        wikidata = wikidata ?: "",
         rate = rate,
-        imageUrl = image,
-        previewUrl = preview?.source,
-        wikipediaUrl = wikipedia,
-        wikipediaTitle = wikipediaExtracts?.title,
-        wikipediaText = wikipediaExtracts?.text,
-        wikipediaHtml = wikipediaExtracts?.html,
-        url = url,
+        imageUrl = image ?: "",
+        previewUrl = preview?.source ?: "",
+        wikipediaUrl = wikipedia ?: "",
+        wikipediaTitle = wikipediaExtracts?.title ?: "",
+        wikipediaText = wikipediaExtracts?.text ?: "",
+        wikipediaHtml = wikipediaExtracts?.html ?: "",
+        url = url ?: "",
         otm = otm,
         longitude = point?.longitude,
         latitude = point?.latitude,
@@ -107,6 +109,21 @@ data class PlaceAddressApiEntity(
     val stateDistrict: String? = null
 ) {
     fun toDomain() = PlaceAddress(
-        road, town, city, suburb, state, county, country, houseNumber, cityDistrict, stateDistrict
+        road = road ?: "",
+        town = town ?: "",
+        city = city ?: "",
+        suburb = suburb ?: "",
+        state = state ?: "",
+        county = county ?: "",
+        country = country ?: "",
+        houseNumber = houseNumber ?: "",
+        cityDistrict = cityDistrict ?: "",
+        stateDistrict = stateDistrict ?: ""
     )
 }
+
+@Serializable
+data class PlaceInfoApiEntity(
+    @SerialName("descr")
+    val description: String? = null
+)
