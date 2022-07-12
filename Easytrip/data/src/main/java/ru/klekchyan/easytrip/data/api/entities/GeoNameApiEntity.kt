@@ -1,4 +1,4 @@
-package ru.klekchyan.easytrip.data.apiEntities
+package ru.klekchyan.easytrip.data.api.entities
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

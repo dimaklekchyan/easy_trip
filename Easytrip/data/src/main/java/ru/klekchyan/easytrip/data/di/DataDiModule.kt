@@ -1,9 +1,12 @@
 package ru.klekchyan.easytrip.data.di
 
+import android.content.Context
+import androidx.room.Room
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
@@ -14,7 +17,11 @@ import retrofit2.Converter
 import retrofit2.Retrofit
 import ru.klekchyan.easytrip.data.api.services.BaseMapService
 import ru.klekchyan.easytrip.data.api.services.CatalogMapService
+import ru.klekchyan.easytrip.data.db.AppDatabase
+import ru.klekchyan.easytrip.data.db.daos.LocationDao
+import ru.klekchyan.easytrip.data.repositories.LocationRepositoryImpl
 import ru.klekchyan.easytrip.data.repositories.MainRepositoryImpl
+import ru.klekchyan.easytrip.domain.repositories.LocationRepository
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
 import javax.inject.Singleton
 
@@ -74,9 +81,27 @@ object DataDiModule {
     }
 
     /*
+    DB
+    */
+    @Provides
+    @Singleton
+    fun provideDb(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, "appdb")
+            .fallbackToDestructiveMigration()
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideLocationDao(db: AppDatabase): LocationDao = db.locationDao()
+
+    /*
    Repositories
     */
     @Provides
     @Singleton
     fun bindMainRepository(r: MainRepositoryImpl): MainRepository = r
+
+    @Provides
+    @Singleton
+    fun bindLocationRepository(r: LocationRepositoryImpl): LocationRepository = r
 }

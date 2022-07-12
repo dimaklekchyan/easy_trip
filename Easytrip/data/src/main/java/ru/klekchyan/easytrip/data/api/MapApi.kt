@@ -4,10 +4,10 @@ import ru.klekchyan.easytrip.common.AppError
 import ru.klekchyan.easytrip.common.Either
 import ru.klekchyan.easytrip.data.api.services.BaseMapService
 import ru.klekchyan.easytrip.data.api.services.CatalogMapService
-import ru.klekchyan.easytrip.data.apiEntities.CatalogApiEntity
-import ru.klekchyan.easytrip.data.apiEntities.DetailedPlaceApiEntity
-import ru.klekchyan.easytrip.data.apiEntities.GeoNameApiEntity
-import ru.klekchyan.easytrip.data.apiEntities.SimplePlaceApiEntity
+import ru.klekchyan.easytrip.data.api.entities.CatalogApiEntity
+import ru.klekchyan.easytrip.data.api.entities.DetailedPlaceApiEntity
+import ru.klekchyan.easytrip.data.api.entities.GeoNameApiEntity
+import ru.klekchyan.easytrip.data.api.entities.SimplePlaceApiEntity
 import javax.inject.Inject
 import javax.inject.Singleton
 

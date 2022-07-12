@@ -2,7 +2,6 @@ package ru.klekchyan.easytrip
 
 import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
@@ -74,15 +73,5 @@ class MainActivity : ComponentActivity(), LocationRequester {
             mBound = false
         }
         super.onStop()
-    }
-
-    companion object {
-        private const val EXTRA_DATA_KEY = "extra_data_key"
-
-        fun createIntent(context: Context, fromNotification: Boolean): Intent {
-            return Intent(context, MainActivity::class.java).apply {
-                putExtra(EXTRA_DATA_KEY, fromNotification)
-            }
-        }
     }
 }

@@ -1,4 +1,4 @@
-package ru.klekchyan.easytrip.data.apiEntities
+package ru.klekchyan.easytrip.data.api.entities
 
 import kotlinx.serialization.Serializable
 import ru.klekchyan.easytrip.domain.entities.Catalog
