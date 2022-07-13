@@ -5,7 +5,7 @@ data class DetailedPlace(
     val name: String,
     val description: String,
     //Comma-separated list of categories
-    val kinds: String,
+    val kinds: List<String>,
     //OpenStreetMap identifier of the object
     val osm: String,
     //Wikidata identifier of the object

@@ -1,5 +1,6 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,6 +18,7 @@ import ru.klekchyan.easytrip.domain.useCases.*
 import ru.klekchyan.easytrip.main_ui.utils.ClusterImageProvider
 import ru.klekchyan.easytrip.main_ui.utils.getDeltaBetweenPoints
 import ru.klekchyan.easytrip.main_ui.utils.toPoint
+import ru.klekchyan.easytrip.main_ui.utils.toRequestFormat
 
 class MapController(
     private val scope: CoroutineScope,
@@ -35,8 +37,9 @@ class MapController(
     private var lastPoint by mutableStateOf(Point(0.0, 0.0))
     private var currentPoint by mutableStateOf(Point(0.0, 0.0))
     private var currentZoom by mutableStateOf(14f)
-    private var currentSearchQuery by mutableStateOf("")
-    private var currentKinds by mutableStateOf<String?>(null)
+    var currentSearchQuery by mutableStateOf("")
+        private set
+    private var currentKinds by mutableStateOf<List<String>>(emptyList())
     var currentDetailedPlace by mutableStateOf<DetailedPlace?>(null)
         private set
 
@@ -118,13 +121,19 @@ class MapController(
 
     fun onSearchQueryChanged(search: String) {
         currentSearchQuery = search
-        getPlacesByRadiusAndNAme(
-            radius = currentRadius,
-            name = currentSearchQuery,
-            longitude = currentPoint.longitude,
-            latitude = currentPoint.latitude,
-            kinds = currentKinds
-        )
+        getNewPlaces()
+    }
+
+    fun onKindsChanged(kind: String) {
+        currentKinds.toMutableList().let { mutableList ->
+            if(mutableList.contains(kind)) {
+                mutableList.remove(kind)
+            } else {
+                mutableList.add(kind)
+            }
+            currentKinds = mutableList
+        }
+        getNewPlaces()
     }
 
     fun moveToUserLocation() {
@@ -179,10 +188,10 @@ class MapController(
         radius: Double,
         longitude: Double,
         latitude: Double,
-        kinds: String?
+        kinds: List<String>
     ) {
         scope.launch(Dispatchers.IO) {
-            getPlacesByRadiusUseCase(radius, longitude, latitude, kinds).collect { state ->
+            getPlacesByRadiusUseCase(radius, longitude, latitude, kinds.toRequestFormat()).collect { state ->
                 when(state) {
                     is GetPlacesByRadiusUseCase.State.Loading -> { /*TODO*/ }
                     is GetPlacesByRadiusUseCase.State.Error -> { /*TODO*/ }
@@ -199,10 +208,10 @@ class MapController(
         name: String,
         longitude: Double,
         latitude: Double,
-        kinds: String?
+        kinds: List<String>
     ) {
         scope.launch(Dispatchers.IO) {
-            getPlacesByRadiusAndNameUseCase(radius, name, longitude, latitude, kinds).collect { state ->
+            getPlacesByRadiusAndNameUseCase(radius, name, longitude, latitude, kinds.toRequestFormat()).collect { state ->
                 when(state) {
                     is GetPlacesByRadiusAndNameUseCase.State.Loading -> { /*TODO*/ }
                     is GetPlacesByRadiusAndNameUseCase.State.Error -> { /*TODO*/ }

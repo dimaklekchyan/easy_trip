@@ -1,5 +1,6 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
+import android.Manifest
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
@@ -8,21 +9,27 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Button
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.LocationSearching
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
 import androidx.core.content.ContextCompat
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
@@ -48,11 +55,11 @@ fun Map(
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { map ->
-        map.forEach { (_, isGranted) ->
-            if (isGranted) {
-                (context as LocationRequester).requestLocationUpdates()
-                mapController.moveToUserLocation()
-            }
+        if(map.any { it.value }) {
+            (context as LocationRequester).requestLocationUpdates()
+            mapController.moveToUserLocation()
+        } else if(map.size > 1 && !(context as ComponentActivity).shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)) {
+            Toast.makeText(context, "Hui tam", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -83,34 +90,43 @@ fun Map(
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        AndroidView(
-            factory = { mapView },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        Button(
-            onClick = {
-                context.checkLocationPermissions(
-                    onFineGranted = {
-                        (context as LocationRequester).requestLocationUpdates()
-                        mapController.moveToUserLocation()
-                    },
-                    onCoarseGranted = {
-                        (context as LocationRequester).requestLocationUpdates()
-                        mapController.moveToUserLocation()
-                        launcher.launch(arrayOf(ACCESS_FINE_LOCATION))
-                    },
-                    onAllDenied = {
-                        launcher.launch(arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION))
-                    }
-                )
-            }
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    context.checkLocationPermissions(
+                        onFineGranted = {
+                            (context as LocationRequester).requestLocationUpdates()
+                            mapController.moveToUserLocation()
+                        },
+                        onCoarseGranted = {
+                            (context as LocationRequester).requestLocationUpdates()
+                            mapController.moveToUserLocation()
+                            launcher.launch(arrayOf(ACCESS_FINE_LOCATION))
+                        },
+                        onAllDenied = {
+                            launcher.launch(arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION))
+                        }
+                    )
+                },
+                content = {
+                    Icon(imageVector = Icons.Rounded.LocationSearching, contentDescription = null)
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(text = "Текущее местоположение")
+            AndroidView(
+                factory = { mapView },
+                modifier = Modifier.fillMaxSize()
+            )
+            TextField(value = mapController.currentSearchQuery, onValueChange = { mapController.onSearchQueryChanged(it) })
         }
     }
 }
@@ -170,10 +186,10 @@ fun drawPlaceMark(place: SimplePlace): Bitmap {
     val canvas = Canvas(bitmap)
     // отрисовка плейсмарка
     val paint = Paint()
-    paint.color = Color.WHITE
+    paint.color = place.color.toArgb()
     paint.style = Paint.Style.FILL
     canvas.drawCircle(picSize / 2f, picSize / 2f, picSize / 2f, paint)
-    paint.color = Color.BLACK
+    paint.color = place.color.toArgb()
     paint.style = Paint.Style.STROKE
     canvas.drawCircle(picSize / 2f, picSize / 2f, picSize / 2f, paint)
     // отрисовка текста

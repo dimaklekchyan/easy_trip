@@ -3,6 +3,8 @@ package ru.klekchyan.easytrip.common
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 

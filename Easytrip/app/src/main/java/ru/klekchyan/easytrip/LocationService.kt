@@ -116,7 +116,6 @@ class LocationService: Service() {
     }
 
     private fun onNewLocation(location: Location) {
-        Log.d("TAG2", "service onNewLocation ${location.latitude} ${location.longitude}")
         scope.launch {
             locationRepository.saveLocation(
                 latitude = location.latitude,

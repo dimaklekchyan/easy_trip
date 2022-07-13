@@ -20,7 +20,7 @@ data class SimplePlaceApiEntity(
     fun toDomain() = SimplePlace(
         xid = xid,
         name = name,
-        kinds = kinds,
+        kinds = kinds.split(",").toList(),
         osm = osm,
         wikidata = wikidata,
         dist = dist,
@@ -52,7 +52,7 @@ data class DetailedPlaceApiEntity(
         xid = xid,
         name = name,
         description = info?.description ?: "",
-        kinds = kinds,
+        kinds = kinds.split(",").toList(),
         osm = osm ?: "",
         wikidata = wikidata ?: "",
         rate = rate,
