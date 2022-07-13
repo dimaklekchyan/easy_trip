@@ -6,28 +6,29 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.entities.CatalogChild
+import ru.klekchyan.easytrip.domain.repositories.LocationRepository
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
-import ru.klekchyan.easytrip.domain.useCases.GetCatalogUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
+import ru.klekchyan.easytrip.domain.useCases.*
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    mainRepository: MainRepository
+    mainRepository: MainRepository,
+    locationRepository: LocationRepository
 ): ViewModel() {
 
     private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(mainRepository)
     private val getPlacesByRadiusAndNameUseCase = GetPlacesByRadiusAndNameUseCase(mainRepository)
     private val getDetailedPlaceUseCase = GetDetailedPlaceUseCase(mainRepository)
     private val getCatalogUseCase = GetCatalogUseCase(mainRepository)
+    private val getCurrentUserLocationUseCase = GetCurrentUserLocationUseCase(locationRepository)
 
     val mapController = MapController(
         scope = viewModelScope,
         getPlacesByRadiusUseCase = getPlacesByRadiusUseCase,
         getPlacesByRadiusAndNameUseCase = getPlacesByRadiusAndNameUseCase,
-        getDetailedPlaceUseCase = getDetailedPlaceUseCase
+        getDetailedPlaceUseCase = getDetailedPlaceUseCase,
+        getCurrentUserLocationUseCase = getCurrentUserLocationUseCase
     )
 
     val categories = mutableListOf<String>()

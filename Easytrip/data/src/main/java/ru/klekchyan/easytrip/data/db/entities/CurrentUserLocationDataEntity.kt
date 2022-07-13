@@ -6,12 +6,11 @@ import ru.klekchyan.easytrip.domain.entities.CurrentUserLocation
 
 @Entity(tableName = "currentLocations")
 data class CurrentUserLocationDataEntity(
+    @PrimaryKey
+    val id: Int = 1,
     val longitude: Double,
     val latitude: Double,
     val isPrecise: Boolean
 ) {
-    @PrimaryKey(autoGenerate = true)
-    var id: Int? = null
-
     fun toDomain() = CurrentUserLocation(longitude, latitude, isPrecise)
 }

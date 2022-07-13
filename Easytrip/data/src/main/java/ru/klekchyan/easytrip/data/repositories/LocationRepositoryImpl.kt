@@ -14,13 +14,17 @@ class LocationRepositoryImpl @Inject constructor(
     private val locationDao: LocationDao
 ): LocationRepository {
 
-    override fun getCurrentLocationFlow(): Flow<CurrentUserLocation> =
-        locationDao.getCurrentLocationFlow().map { it.toDomain() }
+    override fun getCurrentLocationFlow(): Flow<CurrentUserLocation?> =
+        locationDao.getCurrentLocationFlow().map { it?.toDomain() }
 
 
     override suspend fun saveLocation(longitude: Double, latitude: Double, isPrecise: Boolean) {
         locationDao.updateUserLocation(
-            CurrentUserLocationDataEntity(longitude, latitude, isPrecise)
+            CurrentUserLocationDataEntity(
+                longitude = longitude,
+                latitude = latitude,
+                isPrecise = isPrecise
+            )
         )
     }
 }

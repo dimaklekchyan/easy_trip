@@ -22,28 +22,17 @@ import javax.inject.Inject
 class LocalBinder(val service: LocationService) : Binder()
 
 @AndroidEntryPoint
-class LocationService(): Service() {
+class LocationService: Service() {
 
     @Inject
     lateinit var locationRepository: LocationRepository
 
     private val mBinder: IBinder = LocalBinder(this)
-
-    private val updateIntervalInMilliseconds: Long = 10000
-
-    private val fastestUpdateIntervalInMilliseconds = updateIntervalInMilliseconds / 2
-
     private var mChangingConfiguration = false
-
     private var mLocationRequest: LocationRequest? = null
-
     private var mFusedLocationClient: FusedLocationProviderClient? = null
-
     private var mLocationCallback: LocationCallback? = null
-
     private var mServiceHandler: Handler? = null
-
-    private var mLocation: Location? = null
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -111,7 +100,6 @@ class LocationService(): Service() {
             mFusedLocationClient!!.lastLocation
                 .addOnCompleteListener(OnCompleteListener<Location> { task ->
                     if (task.isSuccessful && task.result != null) {
-                        mLocation = task.result
                         scope.launch {
                             locationRepository.saveLocation(
                                 latitude = task.result?.latitude ?: 0.0,
@@ -128,26 +116,29 @@ class LocationService(): Service() {
     }
 
     private fun onNewLocation(location: Location) {
-        mLocation = location
         Log.d("TAG2", "service onNewLocation ${location.latitude} ${location.longitude}")
         scope.launch {
             locationRepository.saveLocation(
                 latitude = location.latitude,
                 longitude = location.longitude,
-                isPrecise = false)
+                isPrecise = false
+            )
         }
-        //TODO send location to some repository
     }
 
     private fun createLocationRequest() {
         mLocationRequest = LocationRequest.create().apply {
-            interval = updateIntervalInMilliseconds
-            fastestInterval = fastestUpdateIntervalInMilliseconds
+            interval = UPDATE_INTERVAL
+            fastestInterval = FASTEST_UPDATE_INTERVAL
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         }
     }
 
     companion object {
+
+        private const val UPDATE_INTERVAL = 10000L
+        private const val FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2
+
         fun createIntent(context: Context): Intent {
             return Intent(context, LocationService::class.java)
         }

@@ -10,7 +10,7 @@ import ru.klekchyan.easytrip.data.db.entities.CurrentUserLocationDataEntity
 @Dao
 interface LocationDao {
     @Query("SELECT * FROM currentLocations LIMIT 1")
-    fun getCurrentLocationFlow(): Flow<CurrentUserLocationDataEntity>
+    fun getCurrentLocationFlow(): Flow<CurrentUserLocationDataEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun updateUserLocation(location: CurrentUserLocationDataEntity)

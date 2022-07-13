@@ -9,5 +9,5 @@ interface LocationRepository {
         latitude: Double,
         isPrecise: Boolean
     )
-    fun getCurrentLocationFlow(): Flow<CurrentUserLocation>
+    fun getCurrentLocationFlow(): Flow<CurrentUserLocation?>
 }

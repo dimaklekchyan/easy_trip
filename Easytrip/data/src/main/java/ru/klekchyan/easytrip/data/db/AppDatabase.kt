@@ -9,7 +9,7 @@ import ru.klekchyan.easytrip.data.db.entities.CurrentUserLocationDataEntity
     entities = [
         CurrentUserLocationDataEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase: RoomDatabase() {

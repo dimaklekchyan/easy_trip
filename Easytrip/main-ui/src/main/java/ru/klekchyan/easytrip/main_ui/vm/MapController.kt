@@ -11,26 +11,27 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.klekchyan.easytrip.domain.entities.CurrentUserLocation
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
-import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
+import ru.klekchyan.easytrip.domain.useCases.*
 import ru.klekchyan.easytrip.main_ui.utils.ClusterImageProvider
 import ru.klekchyan.easytrip.main_ui.utils.getDeltaBetweenPoints
+import ru.klekchyan.easytrip.main_ui.utils.toPoint
 
 class MapController(
     private val scope: CoroutineScope,
     private val getPlacesByRadiusUseCase: GetPlacesByRadiusUseCase,
     private val getPlacesByRadiusAndNameUseCase: GetPlacesByRadiusAndNameUseCase,
     private val getDetailedPlaceUseCase: GetDetailedPlaceUseCase,
+    private val getCurrentUserLocationUseCase: GetCurrentUserLocationUseCase
 ): CameraListener, ClusterListener, ClusterTapListener {
 
     private var density by mutableStateOf<Float>(1f)
 
     var currentDetailedPlace by mutableStateOf<DetailedPlace?>(null)
         private set
-    private var userLocation by mutableStateOf<Point?>(null)
+    private var userLocation by mutableStateOf<CurrentUserLocation?>(null)
     private var currentRadius by mutableStateOf<Double>(0.0)
     private var lastPoint by mutableStateOf<Point>(Point(0.0, 0.0))
     private var currentPoint by mutableStateOf<Point>(Point(0.0, 0.0))
@@ -44,6 +45,10 @@ class MapController(
     private var onClusterPlaceMarks: () -> Unit = {}
 
     private var listeners by mutableStateOf<List<MapObjectTapListener>>(listOf())
+
+    init {
+        getCurrentUserLocation()
+    }
 
     fun setOnMoveTo(callback: (point: Point, zoom: Float) -> Unit) {
         onMoveTo = callback
@@ -82,7 +87,7 @@ class MapController(
 
     fun moveToUserLocation() {
         userLocation?.let {
-            onMoveTo(it, 14f)
+            onMoveTo(it.toPoint(), 14f)
         }
     }
 
@@ -212,6 +217,17 @@ class MapController(
                             Log.d("TAG2", "${currentDetailedPlace}")
                         }
                     }
+                }
+            }
+        }
+    }
+
+    private fun getCurrentUserLocation() {
+        scope.launch(Dispatchers.IO) {
+            getCurrentUserLocationUseCase().collect { location ->
+                withContext(Dispatchers.Main) {
+                    userLocation = location
+                    Log.d("TAG2", "location: $location")
                 }
             }
         }
