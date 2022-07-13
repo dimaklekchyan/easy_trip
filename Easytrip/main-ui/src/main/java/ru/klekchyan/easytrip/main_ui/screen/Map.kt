@@ -3,13 +3,16 @@ package ru.klekchyan.easytrip.main_ui.screen
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -20,49 +23,51 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.PermissionState
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import androidx.core.content.ContextCompat
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.common.LocationRequester
+import ru.klekchyan.easytrip.common.checkLocationPermissions
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
+import ru.klekchyan.easytrip.main_ui.R
+import ru.klekchyan.easytrip.main_ui.utils.toPoint
 import ru.klekchyan.easytrip.main_ui.vm.MapController
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun Map(
     modifier: Modifier = Modifier,
     mapController: MapController
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val density = LocalDensity.current.density
 
-    val locationPermissionState = rememberMultiplePermissionsState(
-        permissions = listOf(
-            ACCESS_COARSE_LOCATION,
-            ACCESS_FINE_LOCATION
-        )
-    )
-
-    LaunchedEffect(key1 = locationPermissionState.allPermissionsGranted) {
-        if(locationPermissionState.allPermissionsGranted) {
-            (context as LocationRequester).requestLocationUpdates()
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { map ->
+        map.forEach { (_, isGranted) ->
+            if (isGranted) {
+                (context as LocationRequester).requestLocationUpdates()
+                mapController.moveToUserLocation()
+            }
         }
     }
-    
-    LaunchedEffect(key1 = locationPermissionState.revokedPermissions) {
-        val coarsePermissionGranted = locationPermissionState.revokedPermissions.none { it.permission == ACCESS_COARSE_LOCATION }
-        if(coarsePermissionGranted) {
-            (context as LocationRequester).requestLocationUpdates()
-        }
+
+    LaunchedEffect(key1 = Unit) {
+        context.checkLocationPermissions(
+            onFineGranted = {
+                (context as LocationRequester).requestLocationUpdates()
+                mapController.moveToUserLocation()
+            },
+            onCoarseGranted = {
+                (context as LocationRequester).requestLocationUpdates()
+                mapController.moveToUserLocation()
+            },
+            onAllDenied = {}
+        )
     }
 
     val mapView by remember { mutableStateOf(context.createMapView(mapController)) }
@@ -71,14 +76,6 @@ fun Map(
         mapView.onStart()
         mapView.map.addCameraListener(mapController)
         mapController.setNewDensity(density)
-
-        if(locationPermissionState.allPermissionsGranted) {
-            Log.d("TAG2", "disposable granted")
-            scope.launch {
-                delay(5000)
-                (context as LocationRequester).requestLocationUpdates()
-            }
-        }
 
         onDispose {
             mapView.map.mapObjects.clear()
@@ -97,11 +94,20 @@ fun Map(
 
         Button(
             onClick = {
-                if(locationPermissionState.allPermissionsGranted) {
-                    mapController.moveToUserLocation()
-                } else {
-                    locationPermissionState.launchMultiplePermissionRequest()
-                }
+                context.checkLocationPermissions(
+                    onFineGranted = {
+                        (context as LocationRequester).requestLocationUpdates()
+                        mapController.moveToUserLocation()
+                    },
+                    onCoarseGranted = {
+                        (context as LocationRequester).requestLocationUpdates()
+                        mapController.moveToUserLocation()
+                        launcher.launch(arrayOf(ACCESS_FINE_LOCATION))
+                    },
+                    onAllDenied = {
+                        launcher.launch(arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION))
+                    }
+                )
             }
         ) {
             Text(text = "Текущее местоположение")
@@ -133,6 +139,13 @@ internal fun Context.createMapView(mapController: MapController): MapView {
                 this.addTapListener(listener)
             }
             listener
+        }
+
+        mapController.setOnAddUserPlaceMark { location, oldMapObject ->
+            oldMapObject?.let {
+                map.mapObjects.remove(oldMapObject)
+            }
+            map.mapObjects.addPlacemark(location.toPoint(), ImageProvider.fromResource(context, R.drawable.search_result))
         }
 
         mapController.setOnDeletePlaceMarks {

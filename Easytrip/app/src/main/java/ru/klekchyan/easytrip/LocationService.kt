@@ -136,7 +136,7 @@ class LocationService: Service() {
 
     companion object {
 
-        private const val UPDATE_INTERVAL = 10000L
+        private const val UPDATE_INTERVAL = 5000L
         private const val FASTEST_UPDATE_INTERVAL = UPDATE_INTERVAL / 2
 
         fun createIntent(context: Context): Intent {

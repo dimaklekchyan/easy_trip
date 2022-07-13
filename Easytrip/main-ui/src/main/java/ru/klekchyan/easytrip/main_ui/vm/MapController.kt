@@ -1,6 +1,5 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -27,24 +26,28 @@ class MapController(
     private val getCurrentUserLocationUseCase: GetCurrentUserLocationUseCase
 ): CameraListener, ClusterListener, ClusterTapListener {
 
-    private var density by mutableStateOf<Float>(1f)
+    private var density by mutableStateOf(1f)
 
+    private var userLocation by mutableStateOf<CurrentUserLocation?>(null)
+    private var moveToUserWhenLocationWillBeReceived = false
+    private var drawUserPlacemark = false
+    private var currentRadius by mutableStateOf(0.0)
+    private var lastPoint by mutableStateOf(Point(0.0, 0.0))
+    private var currentPoint by mutableStateOf(Point(0.0, 0.0))
+    private var currentZoom by mutableStateOf(14f)
+    private var currentSearchQuery by mutableStateOf("")
+    private var currentKinds by mutableStateOf<String?>(null)
     var currentDetailedPlace by mutableStateOf<DetailedPlace?>(null)
         private set
-    private var userLocation by mutableStateOf<CurrentUserLocation?>(null)
-    private var currentRadius by mutableStateOf<Double>(0.0)
-    private var lastPoint by mutableStateOf<Point>(Point(0.0, 0.0))
-    private var currentPoint by mutableStateOf<Point>(Point(0.0, 0.0))
-    private var currentSearchQuery by mutableStateOf<String>("")
-    private var currentKinds by mutableStateOf<String?>(null)
 
-    var onMoveTo: (point: Point, zoom: Float) -> Unit = { _, _ -> }
-        private set
+    private var onMoveTo: (point: Point, zoom: Float) -> Unit = { _, _ -> }
     private var onAddPlaceMark: ((place: SimplePlace) -> MapObjectTapListener) = { MapObjectTapListener { _, _ -> false} }
+    private var onAddUserPlaceMark: (location: CurrentUserLocation, mapObject: PlacemarkMapObject?) -> PlacemarkMapObject? = { _, _ -> null }
     private var onDeletePlaceMarks: () -> Unit = {}
     private var onClusterPlaceMarks: () -> Unit = {}
 
     private var listeners by mutableStateOf<List<MapObjectTapListener>>(listOf())
+    private var userPlacemarkMapObject by mutableStateOf<PlacemarkMapObject?>(null)
 
     init {
         getCurrentUserLocation()
@@ -56,6 +59,10 @@ class MapController(
 
     fun setOnAddPlaceMark(callback: (place: SimplePlace) -> MapObjectTapListener) {
         onAddPlaceMark = callback
+    }
+
+    fun setOnAddUserPlaceMark(callback: (location: CurrentUserLocation, mapObject: PlacemarkMapObject?) -> PlacemarkMapObject) {
+        onAddUserPlaceMark = callback
     }
 
     fun setOnDeletePlaceMarks(callback: () -> Unit) {
@@ -74,6 +81,41 @@ class MapController(
         density = value
     }
 
+    override fun onCameraPositionChanged(
+        map: Map,
+        pos: CameraPosition,
+        cameraUpdateReason: CameraUpdateReason,
+        finished: Boolean
+    ) {
+        if(finished) {
+            currentPoint = pos.target
+            currentZoom = pos.zoom
+            currentRadius = 4000.0
+
+            val delta = getDeltaBetweenPoints(currentPoint, lastPoint)
+
+            if(delta > 1) {
+                lastPoint = pos.target
+                getNewPlaces()
+            }
+        }
+    }
+
+    override fun onClusterAdded(cluster: Cluster) {
+        cluster.appearance.setIcon(
+            ClusterImageProvider.getInstance(
+                size = cluster.size,
+                density = density
+            )
+        )
+        cluster.addClusterTapListener(this)
+    }
+
+    override fun onClusterTap(cluster: Cluster): Boolean {
+        //TODO
+        return true
+    }
+
     fun onSearchQueryChanged(search: String) {
         currentSearchQuery = search
         getPlacesByRadiusAndNAme(
@@ -86,26 +128,30 @@ class MapController(
     }
 
     fun moveToUserLocation() {
-        userLocation?.let {
-            onMoveTo(it.toPoint(), 14f)
+        if(userLocation != null) {
+            onMoveTo(userLocation!!.toPoint(), currentZoom)
+            drawUserPlacemark = true
+            moveToUserWhenLocationWillBeReceived = false
+        } else {
+            moveToUserWhenLocationWillBeReceived = true
         }
     }
 
-    override fun onCameraPositionChanged(
-        map: Map,
-        pos: CameraPosition,
-        cameraUpdateReason: CameraUpdateReason,
-        finished: Boolean
-    ) {
-        if(finished) {
-            currentPoint = pos.target
-            currentRadius = 4000.0
-
-            val delta = getDeltaBetweenPoints(currentPoint, lastPoint)
-
-            if(delta > 1) {
-                lastPoint = pos.target
-                getNewPlaces()
+    private fun getCurrentUserLocation() {
+        scope.launch(Dispatchers.IO) {
+            getCurrentUserLocationUseCase().collect { location ->
+                withContext(Dispatchers.Main) {
+                    userLocation = location
+                    userLocation?.let {
+                        if(moveToUserWhenLocationWillBeReceived) {
+                            moveToUserLocation()
+                        }
+                        if(drawUserPlacemark) {
+                            userPlacemarkMapObject =
+                                onAddUserPlaceMark(userLocation!!, userPlacemarkMapObject)
+                        }
+                    }
+                }
             }
         }
     }
@@ -127,20 +173,6 @@ class MapController(
                 kinds = currentKinds
             )
         }
-    }
-
-    override fun onClusterAdded(cluster: Cluster) {
-        cluster.appearance.setIcon(
-            ClusterImageProvider.getInstance(
-                size = cluster.size,
-                density = density
-            )
-        )
-        cluster.addClusterTapListener(this)
-    }
-
-    override fun onClusterTap(cluster: Cluster): Boolean {
-        return true
     }
 
     private fun getPlacesByRadius(
@@ -194,17 +226,6 @@ class MapController(
         }
     }
 
-    private fun saveTapListener(listener: MapObjectTapListener) {
-        listeners.toMutableList().let { mutableList ->
-            mutableList.add(listener)
-            listeners = mutableList
-        }
-    }
-
-    private fun deleteAllTapListeners() {
-        listeners = listOf()
-    }
-
     private fun getDetailedPlace(xid: String) {
         scope.launch(Dispatchers.IO) {
             getDetailedPlaceUseCase(xid).collect { state ->
@@ -214,7 +235,6 @@ class MapController(
                     is GetDetailedPlaceUseCase.State.Success -> {
                         withContext(Dispatchers.Main) {
                             currentDetailedPlace = state.place
-                            Log.d("TAG2", "${currentDetailedPlace}")
                         }
                     }
                 }
@@ -222,14 +242,14 @@ class MapController(
         }
     }
 
-    private fun getCurrentUserLocation() {
-        scope.launch(Dispatchers.IO) {
-            getCurrentUserLocationUseCase().collect { location ->
-                withContext(Dispatchers.Main) {
-                    userLocation = location
-                    Log.d("TAG2", "location: $location")
-                }
-            }
+    private fun saveTapListener(listener: MapObjectTapListener) {
+        listeners.toMutableList().let { mutableList ->
+            mutableList.add(listener)
+            listeners = mutableList
         }
+    }
+
+    private fun deleteAllTapListeners() {
+        listeners = listOf()
     }
 }
