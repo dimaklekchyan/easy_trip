@@ -124,15 +124,8 @@ class MapController(
         getNewPlaces()
     }
 
-    fun onKindsChanged(kind: String) {
-        currentKinds.toMutableList().let { mutableList ->
-            if(mutableList.contains(kind)) {
-                mutableList.remove(kind)
-            } else {
-                mutableList.add(kind)
-            }
-            currentKinds = mutableList
-        }
+    fun onKindsChanged(kinds: List<String>) {
+        currentKinds = kinds
         getNewPlaces()
     }
 

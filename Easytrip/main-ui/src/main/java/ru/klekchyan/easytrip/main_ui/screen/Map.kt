@@ -1,25 +1,16 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
-import android.Manifest
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
-import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.LocationSearching
+import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,16 +20,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale
-import androidx.core.content.ContextCompat
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
-import ru.klekchyan.easytrip.common.LocationRequester
-import ru.klekchyan.easytrip.common.checkLocationPermissions
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.main_ui.R
 import ru.klekchyan.easytrip.main_ui.utils.toPoint
@@ -51,31 +38,6 @@ fun Map(
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current.density
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { map ->
-        if(map.any { it.value }) {
-            (context as LocationRequester).requestLocationUpdates()
-            mapController.moveToUserLocation()
-        } else if(map.size > 1 && !(context as ComponentActivity).shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)) {
-            Toast.makeText(context, "Hui tam", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    LaunchedEffect(key1 = Unit) {
-        context.checkLocationPermissions(
-            onFineGranted = {
-                (context as LocationRequester).requestLocationUpdates()
-                mapController.moveToUserLocation()
-            },
-            onCoarseGranted = {
-                (context as LocationRequester).requestLocationUpdates()
-                mapController.moveToUserLocation()
-            },
-            onAllDenied = {}
-        )
-    }
 
     val mapView by remember { mutableStateOf(context.createMapView(mapController)) }
 
@@ -90,48 +52,13 @@ fun Map(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    context.checkLocationPermissions(
-                        onFineGranted = {
-                            (context as LocationRequester).requestLocationUpdates()
-                            mapController.moveToUserLocation()
-                        },
-                        onCoarseGranted = {
-                            (context as LocationRequester).requestLocationUpdates()
-                            mapController.moveToUserLocation()
-                            launcher.launch(arrayOf(ACCESS_FINE_LOCATION))
-                        },
-                        onAllDenied = {
-                            launcher.launch(arrayOf(ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION))
-                        }
-                    )
-                },
-                content = {
-                    Icon(imageVector = Icons.Rounded.LocationSearching, contentDescription = null)
-                }
-            )
-        }
-    ) { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            AndroidView(
-                factory = { mapView },
-                modifier = Modifier.fillMaxSize()
-            )
-            TextField(value = mapController.currentSearchQuery, onValueChange = { mapController.onSearchQueryChanged(it) })
-        }
-    }
+    AndroidView(
+        factory = { mapView },
+        modifier = modifier
+    )
 }
 
-internal fun Context.createMapView(mapController: MapController): MapView {
+private fun Context.createMapView(mapController: MapController): MapView {
     return MapView(this).apply {
         val clusterizedCollection = map.mapObjects.addClusterizedPlacemarkCollection(mapController)
 
@@ -180,7 +107,7 @@ internal fun Context.createMapView(mapController: MapController): MapView {
     }
 }
 
-fun drawPlaceMark(place: SimplePlace): Bitmap {
+private fun drawPlaceMark(place: SimplePlace): Bitmap {
     val picSize = 100.dp.value.toInt()
     val bitmap = Bitmap.createBitmap(picSize, picSize, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)

@@ -7,9 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.entities.Catalog
-import ru.klekchyan.easytrip.domain.entities.CatalogChild
 import ru.klekchyan.easytrip.domain.repositories.LocationRepository
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
 import ru.klekchyan.easytrip.domain.useCases.*
@@ -38,8 +40,41 @@ class MainViewModel @Inject constructor(
     var catalog by mutableStateOf<Catalog?>(null)
         private set
 
+    private val _searchQuery = MutableStateFlow<String>("")
+    val searchQuery: Flow<String> = _searchQuery
+
+    var currentKinds by mutableStateOf<List<String>>(emptyList())
+        private set
+
     init {
         getCatalog()
+        observeSearchQuery()
+    }
+
+    fun onSearchQueryChanged(search: String) {
+        viewModelScope.launch {
+            _searchQuery.emit(search)
+        }
+    }
+
+    fun onKindsChanged(kind: String) {
+        currentKinds.toMutableList().let { mutableList ->
+            if(mutableList.contains(kind)) {
+                mutableList.remove(kind)
+            } else {
+                mutableList.add(kind)
+            }
+            currentKinds = mutableList
+        }
+        mapController.onKindsChanged(currentKinds)
+    }
+
+    private fun observeSearchQuery() {
+        viewModelScope.launch(Dispatchers.IO) {
+            searchQuery.debounce(500).collect { query ->
+                mapController.onSearchQueryChanged(query)
+            }
+        }
     }
 
     private fun getCatalog() {
