@@ -1,6 +1,5 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,7 +13,10 @@ import kotlinx.coroutines.withContext
 import ru.klekchyan.easytrip.domain.entities.CurrentUserLocation
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
-import ru.klekchyan.easytrip.domain.useCases.*
+import ru.klekchyan.easytrip.domain.useCases.GetCurrentUserLocationUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
+import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
 import ru.klekchyan.easytrip.main_ui.utils.ClusterImageProvider
 import ru.klekchyan.easytrip.main_ui.utils.getDeltaBetweenPoints
 import ru.klekchyan.easytrip.main_ui.utils.toPoint
@@ -137,6 +139,10 @@ class MapController(
         } else {
             moveToUserWhenLocationWillBeReceived = true
         }
+    }
+
+    fun onCloseDetailedPlaceSheet() {
+        currentDetailedPlace = null
     }
 
     private fun getCurrentUserLocation() {

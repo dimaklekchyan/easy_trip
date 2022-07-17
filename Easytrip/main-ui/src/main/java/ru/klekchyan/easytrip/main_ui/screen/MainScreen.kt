@@ -1,9 +1,6 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
 import android.Manifest
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -11,8 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Filter
-import androidx.compose.material.icons.rounded.LocationSearching
 import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.runtime.*
@@ -34,6 +29,7 @@ fun MainScreen(
 ) {
     val searchText by vm.searchQuery.collectAsState(initial = "")
     val kinds = vm.currentKinds
+    val catalog = vm.catalog
     val detailedPlace = vm.mapController.currentDetailedPlace
 
     val context = LocalContext.current
@@ -57,7 +53,7 @@ fun MainScreen(
             vm.mapController.moveToUserLocation()
         } else if(map.size > 1 && !shouldShowRationale) {
             coroutineScope.launch {
-                sheetContentHandler.openSheet(ModalSheetContentType.Filter)
+                sheetContentHandler.openSheet(ModalSheetContentType.PermissionRationale)
             }
 //            context.startActivity(
 //                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -84,26 +80,33 @@ fun MainScreen(
     BackHandler(enabled = modalSheetState.isVisible) {
         coroutineScope.launch {
             sheetContentHandler.closeSheet()
+            vm.mapController.onCloseDetailedPlaceSheet()
         }
     }
 
     LaunchedEffect(key1 = modalSheetState.currentValue) {
         if(!modalSheetState.isVisible) {
             sheetContentHandler.closeSheet()
+            vm.mapController.onCloseDetailedPlaceSheet()
         }
     }
 
     LaunchedEffect(key1 = detailedPlace) {
-        detailedPlace?.let {
+        detailedPlace?.let { place ->
             coroutineScope.launch {
-                sheetContentHandler.openSheet(ModalSheetContentType.DetailedPlace)
+                sheetContentHandler.openSheet(ModalSheetContentType.DetailedPlace(place))
             }
         }
     }
 
     ModalBottomSheetLayout(
         sheetContent = {
-            BottomSheetContent(handler = sheetContentHandler)
+            BottomSheetContent(
+                handler = sheetContentHandler,
+                onCatalogPositionClick = {
+                    vm.onKindsChanged(it)
+                }
+            )
         },
         sheetState = modalSheetState
     ) {
@@ -113,7 +116,7 @@ fun MainScreen(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            sheetContentHandler.openSheet(ModalSheetContentType.Filter)
+                            sheetContentHandler.openSheet(ModalSheetContentType.Filter(catalog, kinds))
                         }
                     },
                     content = {
@@ -175,8 +178,10 @@ internal fun ScreenContent(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             TextField(
+                modifier = Modifier.fillMaxWidth(),
                 value = searchText,
-                onValueChange = onSearchTextChanged
+                onValueChange = onSearchTextChanged,
+                colors = TextFieldDefaults.textFieldColors()
             )
         }
         Box(

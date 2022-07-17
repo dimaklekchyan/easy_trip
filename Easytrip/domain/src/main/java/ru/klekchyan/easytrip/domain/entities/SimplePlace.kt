@@ -1,6 +1,6 @@
 package ru.klekchyan.easytrip.domain.entities
 
-import androidx.compose.ui.graphics.Color
+import ru.klekchyan.easytrip.common.R
 
 data class SimplePlace(
     val xid: String,
@@ -16,13 +16,13 @@ data class SimplePlace(
     val longitude: Double? = null,
     val latitude: Double? = null,
 ) {
-    val color = when {
-        kinds.contains("tourist_facilities") -> Color.Gray
-        kinds.contains("sport") -> Color.Blue
-        kinds.contains("interesting_places") -> Color.Yellow
-        kinds.contains("amusements") -> Color.Magenta
-        kinds.contains("adult") -> Color.Red
-        kinds.contains("accomodations") -> Color.Green
-        else -> Color.White
+    val icon = when {
+        kinds.contains("tourist_facilities") -> R.drawable.ic_tourist_facility_point
+        kinds.contains("sport") -> R.drawable.ic_sport_point
+        kinds.contains("interesting_places") -> R.drawable.ic_interesting_place_point
+        kinds.contains("amusements") -> R.drawable.ic_amusement_point
+        kinds.contains("adult") -> R.drawable.ic_adult_point
+        kinds.contains("accomodations") -> R.drawable.ic_accomodation_point
+        else -> R.drawable.ic_undefined_point
     }
 }
