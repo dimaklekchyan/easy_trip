@@ -1,8 +1,5 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,7 +8,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import ru.klekchyan.easytrip.domain.entities.Catalog
 import ru.klekchyan.easytrip.domain.repositories.LocationRepository
 import ru.klekchyan.easytrip.domain.repositories.MainRepository
 import ru.klekchyan.easytrip.domain.useCases.*
@@ -37,17 +33,17 @@ class MainViewModel @Inject constructor(
         getCurrentUserLocationUseCase = getCurrentUserLocationUseCase
     )
 
-    var catalog by mutableStateOf<Catalog?>(null)
-        private set
+    val catalogFilterModel = CatalogFilterModel(
+        scope = viewModelScope,
+        mapController = mapController,
+        getCatalogUseCase = getCatalogUseCase
+    )
 
     private val _searchQuery = MutableStateFlow<String>("")
     val searchQuery: Flow<String> = _searchQuery
 
-    var currentKinds by mutableStateOf<List<String>>(emptyList())
-        private set
 
     init {
-        getCatalog()
         observeSearchQuery()
     }
 
@@ -57,36 +53,10 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun onKindsChanged(kind: String) {
-        currentKinds.toMutableList().let { mutableList ->
-            if(mutableList.contains(kind)) {
-                mutableList.remove(kind)
-            } else {
-                mutableList.add(kind)
-            }
-            currentKinds = mutableList
-        }
-        mapController.onKindsChanged(currentKinds)
-    }
-
     private fun observeSearchQuery() {
         viewModelScope.launch(Dispatchers.IO) {
             searchQuery.debounce(500).collect { query ->
                 mapController.onSearchQueryChanged(query)
-            }
-        }
-    }
-
-    private fun getCatalog() {
-        viewModelScope.launch(Dispatchers.IO) {
-            getCatalogUseCase().collect { state ->
-                when(state) {
-                    is GetCatalogUseCase.State.Loading -> {}
-                    is GetCatalogUseCase.State.Error -> {}
-                    is GetCatalogUseCase.State.Success -> {
-                        catalog = state.catalog
-                    }
-                }
             }
         }
     }

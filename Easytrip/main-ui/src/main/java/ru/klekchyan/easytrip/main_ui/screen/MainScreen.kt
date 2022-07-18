@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -28,8 +29,6 @@ fun MainScreen(
     vm: MainViewModel
 ) {
     val searchText by vm.searchQuery.collectAsState(initial = "")
-    val kinds = vm.currentKinds
-    val catalog = vm.catalog
     val detailedPlace = vm.mapController.currentDetailedPlace
 
     val context = LocalContext.current
@@ -55,11 +54,6 @@ fun MainScreen(
             coroutineScope.launch {
                 sheetContentHandler.openSheet(ModalSheetContentType.PermissionRationale)
             }
-//            context.startActivity(
-//                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-//                    data = Uri.fromParts("package", context.packageName, null)
-//                }
-//            )
         }
     }
 
@@ -102,13 +96,11 @@ fun MainScreen(
     ModalBottomSheetLayout(
         sheetContent = {
             BottomSheetContent(
-                handler = sheetContentHandler,
-                onCatalogPositionClick = {
-                    vm.onKindsChanged(it)
-                }
+                handler = sheetContentHandler
             )
         },
-        sheetState = modalSheetState
+        sheetState = modalSheetState,
+        scrimColor = Color.Unspecified
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -116,7 +108,7 @@ fun MainScreen(
                 FloatingActionButton(
                     onClick = {
                         coroutineScope.launch {
-                            sheetContentHandler.openSheet(ModalSheetContentType.Filter(catalog, kinds))
+                            sheetContentHandler.openSheet(ModalSheetContentType.Filter(vm.catalogFilterModel))
                         }
                     },
                     content = {

@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.location.Location
 import android.os.*
-import android.util.Log
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.OnCompleteListener
 import dagger.hilt.android.AndroidEntryPoint
@@ -15,7 +14,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import ru.klekchyan.easytrip.common.setRequestingLocationUpdates
 import ru.klekchyan.easytrip.domain.repositories.LocationRepository
 import javax.inject.Inject
 
@@ -82,7 +80,6 @@ class LocationService: Service() {
 
     @SuppressLint("MissingPermission")
     fun requestLocationUpdates() {
-        this.setRequestingLocationUpdates(true)
         startService(Intent(applicationContext, LocationService::class.java))
         try {
             mFusedLocationClient!!.requestLocationUpdates(
@@ -90,7 +87,7 @@ class LocationService: Service() {
                 mLocationCallback!!, Looper.myLooper()!!
             )
         } catch (unlikely: SecurityException) {
-            this.setRequestingLocationUpdates(false)
+
         }
     }
 

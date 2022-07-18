@@ -71,10 +71,6 @@ dependencies {
     //Yandex map
     implementation "com.yandex.android:maps.mobile:$yandex_mapkit_version"
 
-    //Accompanist
-    implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"
-    implementation "com.google.accompanist:accompanist-systemuicontroller:$accompanist_version"
-
     //Retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
 

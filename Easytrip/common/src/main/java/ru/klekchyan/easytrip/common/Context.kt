@@ -5,24 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
-import androidx.preference.PreferenceManager
-
-const val keyRequestingLocationUpdates = "requesting_location_updates"
-
-fun Context.requestingLocationUpdates(): Boolean {
-    return PreferenceManager.getDefaultSharedPreferences(this)
-        .getBoolean(keyRequestingLocationUpdates, false)
-}
-
-fun Context.setRequestingLocationUpdates(requestingLocationUpdates: Boolean) {
-    PreferenceManager.getDefaultSharedPreferences(this)
-        .edit()
-        .putBoolean(keyRequestingLocationUpdates, requestingLocationUpdates)
-        .apply()
-}
 
 fun Context.checkLocationPermissions(
     onFineGranted: () -> Unit,
