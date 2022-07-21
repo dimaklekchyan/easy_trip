@@ -1,6 +1,5 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -12,6 +11,14 @@ import ru.klekchyan.easytrip.domain.entities.Catalog
 import ru.klekchyan.easytrip.domain.entities.CatalogChild
 import ru.klekchyan.easytrip.domain.useCases.GetCatalogUseCase
 
+data class CategoriesGroup(
+    val id: String,
+    val name: String,
+    val num: String,
+    val categories: List<CatalogChild>,
+    val isEnabled: Boolean = false
+)
+
 class CatalogFilterModel(
     private val scope: CoroutineScope,
     private val mapController: MapController,
@@ -22,9 +29,7 @@ class CatalogFilterModel(
         private set
     var currentKinds by mutableStateOf<List<String>>(emptyList())
         private set
-    var topCategories by mutableStateOf<List<CatalogChild>>(emptyList())
-        private set
-    var allCategories by mutableStateOf<List<CatalogChild>>(emptyList())
+    var categoriesGroup by mutableStateOf<List<CategoriesGroup>>(emptyList())
         private set
 
     init {
@@ -35,16 +40,15 @@ class CatalogFilterModel(
         scope.launch(Dispatchers.IO) {
             currentKinds.toMutableList().let { mutableList ->
 
-                val topCategoryId = topCategories.first { it.num.first() == category.num.first() }.id
-                val relatedSubcategoriesIds = allCategories.filter { it.num.first() == category.num.first() }.map { it.id }
+                val group = categoriesGroup.first { it.num.first() == category.num.first() }
 
                 if(mutableList.contains(category.id)) {
                     mutableList.remove(category.id)
-                    mutableList.remove(topCategoryId)
+                    mutableList.remove(group.id)
                 } else {
                     mutableList.add(category.id)
-                    if(mutableList.containsAll(relatedSubcategoriesIds)) {
-                        mutableList.add(topCategoryId)
+                    if(mutableList.containsAll(group.categories.map { it.id })) {
+                        mutableList.add(group.id)
                     }
                 }
                 withContext(Dispatchers.Main) {
@@ -58,7 +62,7 @@ class CatalogFilterModel(
     fun onTopCategoryClick(category: CatalogChild) {
         scope.launch(Dispatchers.IO) {
             currentKinds.toMutableList().let { mutableList ->
-                val subcategoriesIds = allCategories.filter { it.num.first() == category.num.first() }.map { it.id }
+                val subcategoriesIds = categoriesGroup.first { it.num.first() == category.num.first() }.categories.map { it.id }
 
                 if(mutableList.contains(category.id)) {
                     mutableList.remove(category.id)
@@ -84,12 +88,14 @@ class CatalogFilterModel(
                         is GetCatalogUseCase.State.Error -> {}
                         is GetCatalogUseCase.State.Success -> {
                             catalog = state.catalog
-                            topCategories = catalog?.children ?: emptyList()
-                            //TODO fixed that
-                            topCategories.forEach {
-                                onTopCategoryClick(it)
-                            }
-                            getAllCategories(catalog?.children ?: emptyList())
+                            categoriesGroup = catalog?.children?.map {
+                                CategoriesGroup(
+                                    id = it.id,
+                                    name = it.name,
+                                    num = it.num,
+                                    categories = getAllCategories(it.children ?: emptyList())
+                                )
+                            } ?: emptyList()
                             mapController.onKindsChanged(currentKinds)
                         }
                     }
@@ -98,20 +104,17 @@ class CatalogFilterModel(
         }
     }
 
-    private suspend fun getAllCategories(children: List<CatalogChild>) {
+    private suspend fun getAllCategories(children: List<CatalogChild>): List<CatalogChild> {
+        val list = mutableListOf<CatalogChild>()
         withContext(Dispatchers.IO) {
             children.forEach { child ->
                 if (child.children.isNullOrEmpty()) {
-                    allCategories.toMutableList().let { mutableList ->
-                        mutableList.add(child)
-                        withContext(Dispatchers.Main) {
-                            allCategories = mutableList
-                        }
-                    }
+                    list.add(child)
                 } else {
-                    getAllCategories(child.children!!)
+                    list.addAll(getAllCategories(child.children!!))
                 }
             }
         }
+        return list
     }
 }

@@ -2,6 +2,7 @@ package ru.klekchyan.easytrip.main_ui.screen
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -90,7 +91,9 @@ private fun CatalogFilterSheetContent(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     Column(
-        modifier = Modifier.fillMaxWidth().requiredHeightIn(max = screenHeight / 2)
+        modifier = Modifier
+            .fillMaxWidth()
+            .requiredHeightIn(max = screenHeight / 2)
     ) {
         Box(
             modifier = modifier.fillMaxWidth(),
@@ -127,29 +130,32 @@ private fun CatalogFilterSheetContent(
                 }
             }
         }
-        FlowRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            mainAxisSpacing = 5.dp
-        ) {
-            model.allCategories.forEach { category ->
 
-                val included = model.currentKinds.contains(category.id)
-                val color by animateColorAsState(
-                    targetValue = if(included) category.color else category.color.copy(alpha = 0.5f)
-                )
-
-                Surface(
-                    modifier = Modifier,
-                    shape = RoundedCornerShape(8.dp),
-                    color = color,
-                    onClick = { model.onCategoryClick(category) }
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(items = model.categoriesGroup, key = { it.id }) { group ->
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    mainAxisSpacing = 5.dp
                 ) {
-                    Text(
-                        text = category.name,
-                        modifier = Modifier.padding(5.dp)
-                    )
+                    group.categories.forEach { category ->
+
+                        val included = model.currentKinds.contains(category.id)
+                        val color by animateColorAsState(
+                            targetValue = if(included) category.color else category.color.copy(alpha = 0.5f)
+                        )
+
+                        Surface(
+                            modifier = Modifier,
+                            shape = RoundedCornerShape(8.dp),
+                            color = color,
+                            onClick = { model.onCategoryClick(category) }
+                        ) {
+                            Text(
+                                text = category.name,
+                                modifier = Modifier.padding(5.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
