@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -14,11 +15,21 @@ import androidx.compose.material.icons.rounded.Maximize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.LightGray
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.google.accompanist.flowlayout.FlowRow
+import ru.klekchyan.easytrip.domain.entities.DetailedPlace
+import ru.klekchyan.easytrip.main_ui.R
 import ru.klekchyan.easytrip.main_ui.vm.CatalogFilterModel
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -69,7 +80,7 @@ internal fun BottomSheetContent(
             CatalogFilterSheetContent(model = type.model)
         }
         is ModalSheetContentType.DetailedPlace -> {
-            Text(text = "Place: ${type.place.name}")
+            DetailedPlaceSheetContent(place = type.place)
         }
         is ModalSheetContentType.PermissionRationale -> {
 //            context.startActivity(
@@ -79,6 +90,67 @@ internal fun BottomSheetContent(
 //            )
         }
         is ModalSheetContentType.None -> Box(modifier = Modifier.requiredSize(1.dp))
+    }
+}
+
+@Composable
+private fun DetailedPlaceSheetContent(
+    modifier: Modifier = Modifier,
+    place: DetailedPlace
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+    ) {
+        val imageRequest = ImageRequest.Builder(LocalContext.current)
+            .data(place.previewUrl)
+            .crossfade(true)
+            .build()
+
+        SubcomposeAsyncImage(
+            model = imageRequest,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(100.dp)
+                .defaultMinSize(minWidth = 100.dp, minHeight = 100.dp)
+                .clip(RoundedCornerShape(12.dp)),
+            imageLoader = LocalContext.current.imageLoader,
+            error = {
+                Icon(
+                    painter = painterResource(id = R.drawable.search_result),
+                    contentDescription = null,
+                    modifier = Modifier.padding(10.dp),
+                    tint = Color.Blue
+                )
+            },
+            loading = {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .size(25.dp),
+                    color = Color.LightGray
+                )
+            }
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(
+            modifier = Modifier
+        ) {
+            Text(
+                text = place.name,
+                maxLines = 1,
+                style = MaterialTheme.typography.h5
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                text = place.description,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.body1
+            )
+        }
     }
 }
 
@@ -130,7 +202,6 @@ private fun CatalogFilterSheetContent(
                 }
             }
         }
-
         LazyColumn(modifier = Modifier.fillMaxWidth()) {
             items(items = model.categoriesGroup, key = { it.id }) { group ->
                 FlowRow(

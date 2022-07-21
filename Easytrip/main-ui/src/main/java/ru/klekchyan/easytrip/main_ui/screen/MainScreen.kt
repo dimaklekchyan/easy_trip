@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NearMe
@@ -100,7 +101,9 @@ fun MainScreen(
             )
         },
         sheetState = modalSheetState,
-        scrimColor = Color.Unspecified
+        scrimColor = Color.Unspecified,
+        sheetBackgroundColor = Color.White,
+        sheetShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
