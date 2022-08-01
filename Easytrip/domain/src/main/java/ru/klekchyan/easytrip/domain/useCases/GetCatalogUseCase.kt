@@ -2,12 +2,12 @@ package ru.klekchyan.easytrip.domain.useCases
 
 import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.domain.entities.Catalog
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 
 class GetCatalogUseCase(
-    private val mainRepository: MainRepository
+    private val placesRepository: PlacesRepository
 ) {
-    operator fun invoke() = mainRepository.getCatalogFlow().map {
+    operator fun invoke() = placesRepository.getCatalogFlow().map {
         when {
             it.isLoading() -> State.Loading
             it.isError() -> State.Error(it.errorInfo)

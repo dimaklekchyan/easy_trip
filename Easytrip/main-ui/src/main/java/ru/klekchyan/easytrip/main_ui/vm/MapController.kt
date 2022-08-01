@@ -11,10 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.klekchyan.easytrip.domain.entities.CurrentUserLocation
-import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.domain.useCases.GetCurrentUserLocationUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
 import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
 import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
 import ru.klekchyan.easytrip.main_ui.utils.ClusterImageProvider
@@ -26,8 +24,8 @@ class MapController(
     private val scope: CoroutineScope,
     private val getPlacesByRadiusUseCase: GetPlacesByRadiusUseCase,
     private val getPlacesByRadiusAndNameUseCase: GetPlacesByRadiusAndNameUseCase,
-    private val getDetailedPlaceUseCase: GetDetailedPlaceUseCase,
-    private val getCurrentUserLocationUseCase: GetCurrentUserLocationUseCase
+    private val getCurrentUserLocationUseCase: GetCurrentUserLocationUseCase,
+    private val onDetailedPlaceClick: (xid: String) -> Unit
 ): CameraListener, ClusterListener, ClusterTapListener {
 
     private var density by mutableStateOf(1f)
@@ -42,8 +40,6 @@ class MapController(
     var currentSearchQuery by mutableStateOf("")
         private set
     private var currentKinds by mutableStateOf<List<String>>(emptyList())
-    var currentDetailedPlace by mutableStateOf<DetailedPlace?>(null)
-        private set
 
     private var onMoveTo: (point: Point, zoom: Float) -> Unit = { _, _ -> }
     private var onAddPlaceMark: ((place: SimplePlace) -> MapObjectTapListener) = { MapObjectTapListener { _, _ -> false} }
@@ -79,7 +75,7 @@ class MapController(
     }
 
     fun onPlaceMarkClick(place: SimplePlace) {
-        getDetailedPlace(place.xid)
+        onDetailedPlaceClick(place.xid)
     }
 
     fun setNewDensity(value: Float) {
@@ -139,10 +135,6 @@ class MapController(
         } else {
             moveToUserWhenLocationWillBeReceived = true
         }
-    }
-
-    fun onCloseDetailedPlaceSheet() {
-        currentDetailedPlace = null
     }
 
     private fun getCurrentUserLocation() {
@@ -231,22 +223,6 @@ class MapController(
                 saveTapListener(listener)
             }
             onClusterPlaceMarks()
-        }
-    }
-
-    private fun getDetailedPlace(xid: String) {
-        scope.launch(Dispatchers.IO) {
-            getDetailedPlaceUseCase(xid).collect { state ->
-                when(state) {
-                    is GetDetailedPlaceUseCase.State.Loading -> { /*TODO*/ }
-                    is GetDetailedPlaceUseCase.State.Error -> { /*TODO*/ }
-                    is GetDetailedPlaceUseCase.State.Success -> {
-                        withContext(Dispatchers.Main) {
-                            currentDetailedPlace = state.place
-                        }
-                    }
-                }
-            }
         }
     }
 

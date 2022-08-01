@@ -7,7 +7,7 @@ import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.GeoName
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 
-interface MainRepository {
+interface PlacesRepository {
 
     fun getCatalogFlow(): Flow<Either<Catalog>>
 
@@ -29,4 +29,11 @@ interface MainRepository {
     ): Flow<Either<List<SimplePlace>>>
 
     fun getDetailedPlaceFlow(xid: String): Flow<Either<DetailedPlace>>
+
+    fun getAllFavoritePlacesFlow(): Flow<List<DetailedPlace>>
+
+    fun getFavoritePlace(xid: String): Flow<DetailedPlace?>
+
+    suspend fun addFavoritePlace(place: DetailedPlace)
+    suspend fun deleteFavoritePlace(xid: String)
 }

@@ -1,23 +1,26 @@
 package ru.klekchyan.easytrip.data.repositories
 
-import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.common.Either
 import ru.klekchyan.easytrip.data.api.MapApi
+import ru.klekchyan.easytrip.data.db.daos.FavoritePlacesDao
+import ru.klekchyan.easytrip.data.db.entities.toDataEntity
 import ru.klekchyan.easytrip.domain.entities.Catalog
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
 import ru.klekchyan.easytrip.domain.entities.GeoName
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class MainRepositoryImpl @Inject constructor(
-    private val mapApi: MapApi
-): MainRepository {
+class PlacesRepositoryImpl @Inject constructor(
+    private val mapApi: MapApi,
+    private val placesDao: FavoritePlacesDao
+): PlacesRepository {
 
     override fun getCatalogFlow(): Flow<Either<Catalog>> = flow {
         emit(Either.loading())
@@ -117,6 +120,22 @@ class MainRepositoryImpl @Inject constructor(
         result.onSuccess { detailedPlace ->
             emit(Either.success(detailedPlace!!.toDomain()))
         }
+    }
+
+    override fun getAllFavoritePlacesFlow(): Flow<List<DetailedPlace>> = placesDao.getAllFavoritePlacesFlow().map { list ->
+        list.map { it.toDomain() }
+    }
+
+    override fun getFavoritePlace(xid: String): Flow<DetailedPlace?> = placesDao.getFavoritePlaceFlow(xid).map {
+        it?.toDomain()
+    }
+
+    override suspend fun addFavoritePlace(place: DetailedPlace) {
+        placesDao.insertDetailedPlace(place.toDataEntity())
+    }
+
+    override suspend fun deleteFavoritePlace(xid: String) {
+        placesDao.deletePlaceFromFavorite(xid)
     }
 
     private fun getLocaleLanguage() = Locale.getDefault().language.toString()

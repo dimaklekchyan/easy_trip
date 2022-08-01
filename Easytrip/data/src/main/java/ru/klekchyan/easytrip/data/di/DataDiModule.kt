@@ -19,10 +19,11 @@ import ru.klekchyan.easytrip.data.api.services.BaseMapService
 import ru.klekchyan.easytrip.data.api.services.CatalogMapService
 import ru.klekchyan.easytrip.data.db.AppDatabase
 import ru.klekchyan.easytrip.data.db.daos.LocationDao
+import ru.klekchyan.easytrip.data.db.daos.FavoritePlacesDao
 import ru.klekchyan.easytrip.data.repositories.LocationRepositoryImpl
-import ru.klekchyan.easytrip.data.repositories.MainRepositoryImpl
+import ru.klekchyan.easytrip.data.repositories.PlacesRepositoryImpl
 import ru.klekchyan.easytrip.domain.repositories.LocationRepository
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 import javax.inject.Singleton
 
 @Module
@@ -94,12 +95,16 @@ object DataDiModule {
     @Singleton
     fun provideLocationDao(db: AppDatabase): LocationDao = db.locationDao()
 
+    @Provides
+    @Singleton
+    fun providePlaceDao(db: AppDatabase): FavoritePlacesDao = db.favoritePlacesDao()
+
     /*
    Repositories
     */
     @Provides
     @Singleton
-    fun bindMainRepository(r: MainRepositoryImpl): MainRepository = r
+    fun bindPlacesRepository(r: PlacesRepositoryImpl): PlacesRepository = r
 
     @Provides
     @Singleton

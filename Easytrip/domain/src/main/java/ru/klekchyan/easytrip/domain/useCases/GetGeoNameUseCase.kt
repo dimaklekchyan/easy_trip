@@ -2,12 +2,12 @@ package ru.klekchyan.easytrip.domain.useCases
 
 import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.domain.entities.GeoName
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 
 class GetGeoNameUseCase(
-    private val mainRepository: MainRepository
+    private val placesRepository: PlacesRepository
 ) {
-    operator fun invoke(name: String) = mainRepository.getPlaceGeoNameFlow(name).map {
+    operator fun invoke(name: String) = placesRepository.getPlaceGeoNameFlow(name).map {
         when {
             it.isLoading() -> State.Loading
             it.isError() -> State.Error(it.errorInfo)

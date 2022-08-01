@@ -3,10 +3,7 @@ package ru.klekchyan.easytrip.main_ui.vm
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import ru.klekchyan.easytrip.domain.entities.Catalog
 import ru.klekchyan.easytrip.domain.entities.CatalogChild
 import ru.klekchyan.easytrip.domain.useCases.GetCatalogUseCase
@@ -36,8 +33,8 @@ class CatalogFilterModel(
         getCatalog()
     }
 
-    fun onCategoryClick(category: CatalogChild) {
-        scope.launch(Dispatchers.IO) {
+    suspend fun onCategoryClick(category: CatalogChild) {
+        val result = scope.async(Dispatchers.IO) {
             currentKinds.toMutableList().let { mutableList ->
 
                 val group = categoriesGroup.first { it.num.first() == category.num.first() }
@@ -57,10 +54,11 @@ class CatalogFilterModel(
             }
             mapController.onKindsChanged(currentKinds)
         }
+        result.await()
     }
 
-    fun onTopCategoryClick(category: CatalogChild) {
-        scope.launch(Dispatchers.IO) {
+    suspend fun onTopCategoryClick(category: CatalogChild) {
+        val result = scope.async (Dispatchers.IO) {
             currentKinds.toMutableList().let { mutableList ->
                 val subcategoriesIds = categoriesGroup.first { it.num.first() == category.num.first() }.categories.map { it.id }
 
@@ -77,6 +75,7 @@ class CatalogFilterModel(
             }
             mapController.onKindsChanged(currentKinds)
         }
+        result.await()
     }
 
     private fun getCatalog() {
@@ -96,6 +95,7 @@ class CatalogFilterModel(
                                     categories = getAllCategories(it.children ?: emptyList())
                                 )
                             } ?: emptyList()
+                            catalog?.children?.forEach { onTopCategoryClick(it) }
                             mapController.onKindsChanged(currentKinds)
                         }
                     }

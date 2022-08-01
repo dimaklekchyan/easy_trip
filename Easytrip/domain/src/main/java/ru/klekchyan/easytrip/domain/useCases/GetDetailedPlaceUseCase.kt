@@ -2,12 +2,12 @@ package ru.klekchyan.easytrip.domain.useCases
 
 import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 
 class GetDetailedPlaceUseCase(
-    private val mainRepository: MainRepository
+    private val placesRepository: PlacesRepository
 ) {
-    operator fun invoke(xid: String) = mainRepository.getDetailedPlaceFlow(xid).map {
+    operator fun invoke(xid: String) = placesRepository.getDetailedPlaceFlow(xid).map {
         when {
             it.isLoading() -> State.Loading
             it.isError() -> State.Error(it.errorInfo)

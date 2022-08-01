@@ -2,17 +2,17 @@ package ru.klekchyan.easytrip.domain.useCases
 
 import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 
 class GetPlacesByRadiusUseCase(
-    private val mainRepository: MainRepository
+    private val placesRepository: PlacesRepository
 ) {
     operator fun invoke(
         radius: Double,
         longitude: Double,
         latitude: Double,
         kinds: String?
-    ) = mainRepository.getPlacesByRadiusFlow(radius, longitude, latitude, kinds).map {
+    ) = placesRepository.getPlacesByRadiusFlow(radius, longitude, latitude, kinds).map {
         when {
             it.isLoading() -> State.Loading
             it.isError() -> State.Error(it.errorInfo)

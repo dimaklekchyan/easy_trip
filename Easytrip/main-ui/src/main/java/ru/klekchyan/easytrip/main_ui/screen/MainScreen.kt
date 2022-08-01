@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -30,7 +29,7 @@ fun MainScreen(
     vm: MainViewModel
 ) {
     val searchText by vm.searchQuery.collectAsState(initial = "")
-    val detailedPlace = vm.mapController.currentDetailedPlace
+    val detailedPlace = vm.detailedPlaceModel.currentPlace
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -75,21 +74,21 @@ fun MainScreen(
     BackHandler(enabled = modalSheetState.isVisible) {
         coroutineScope.launch {
             sheetContentHandler.closeSheet()
-            vm.mapController.onCloseDetailedPlaceSheet()
+            vm.detailedPlaceModel.onCloseDetailedPlaceSheet()
         }
     }
 
     LaunchedEffect(key1 = modalSheetState.currentValue) {
         if(!modalSheetState.isVisible) {
             sheetContentHandler.closeSheet()
-            vm.mapController.onCloseDetailedPlaceSheet()
+            vm.detailedPlaceModel.onCloseDetailedPlaceSheet()
         }
     }
 
     LaunchedEffect(key1 = detailedPlace) {
         detailedPlace?.let { place ->
             coroutineScope.launch {
-                sheetContentHandler.openSheet(ModalSheetContentType.DetailedPlace(place))
+                sheetContentHandler.openSheet(ModalSheetContentType.DetailedPlace(vm.detailedPlaceModel))
             }
         }
     }

@@ -9,28 +9,41 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.repositories.LocationRepository
-import ru.klekchyan.easytrip.domain.repositories.MainRepository
+import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 import ru.klekchyan.easytrip.domain.useCases.*
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    mainRepository: MainRepository,
+    placesRepository: PlacesRepository,
     locationRepository: LocationRepository
 ): ViewModel() {
 
-    private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(mainRepository)
-    private val getPlacesByRadiusAndNameUseCase = GetPlacesByRadiusAndNameUseCase(mainRepository)
-    private val getDetailedPlaceUseCase = GetDetailedPlaceUseCase(mainRepository)
-    private val getCatalogUseCase = GetCatalogUseCase(mainRepository)
+    private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(placesRepository)
+    private val getPlacesByRadiusAndNameUseCase = GetPlacesByRadiusAndNameUseCase(placesRepository)
+    private val getDetailedPlaceUseCase = GetDetailedPlaceUseCase(placesRepository)
+    private val getCatalogUseCase = GetCatalogUseCase(placesRepository)
     private val getCurrentUserLocationUseCase = GetCurrentUserLocationUseCase(locationRepository)
+    private val getFavoritePlaceUseCase = GetFavoritePlaceUseCase(placesRepository)
+    private val addFavoritePlaceUseCase = AddFavoritePlaceUseCase(placesRepository)
+    private val deleteFavoritePlaceUseCase = DeleteFavoritePlaceUseCase(placesRepository)
+
+    val detailedPlaceModel = DetailedPlaceModel(
+        scope = viewModelScope,
+        getDetailedPlaceUseCase = getDetailedPlaceUseCase,
+        getFavoritePlaceUseCase = getFavoritePlaceUseCase,
+        addFavoritePlaceUseCase = addFavoritePlaceUseCase,
+        deleteFavoritePlaceUseCase = deleteFavoritePlaceUseCase
+    )
 
     val mapController = MapController(
         scope = viewModelScope,
         getPlacesByRadiusUseCase = getPlacesByRadiusUseCase,
         getPlacesByRadiusAndNameUseCase = getPlacesByRadiusAndNameUseCase,
-        getDetailedPlaceUseCase = getDetailedPlaceUseCase,
-        getCurrentUserLocationUseCase = getCurrentUserLocationUseCase
+        getCurrentUserLocationUseCase = getCurrentUserLocationUseCase,
+        onDetailedPlaceClick = { xid ->
+            detailedPlaceModel.onDetailedPlaceClick(xid)
+        }
     )
 
     val catalogFilterModel = CatalogFilterModel(
@@ -41,7 +54,6 @@ class MainViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow<String>("")
     val searchQuery: Flow<String> = _searchQuery
-
 
     init {
         observeSearchQuery()

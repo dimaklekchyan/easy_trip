@@ -27,7 +27,8 @@ data class DetailedPlace(
     val otm: String,
     val longitude: Double? = null,
     val latitude: Double? = null,
-    val address: PlaceAddress? = null
+    val address: PlaceAddress? = null,
+    val isFavorite: Boolean = false
 )
 
 data class PlaceAddress(
