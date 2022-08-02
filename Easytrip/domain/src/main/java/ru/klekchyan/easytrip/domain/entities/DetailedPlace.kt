@@ -28,7 +28,8 @@ data class DetailedPlace(
     val longitude: Double? = null,
     val latitude: Double? = null,
     val address: PlaceAddress? = null,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val distanceToUser: Double? = null
 )
 
 data class PlaceAddress(

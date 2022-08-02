@@ -50,14 +50,14 @@ data class DetailedPlaceApiEntity(
 ) {
     fun toDomain() = DetailedPlace(
         xid = xid,
-        name = name,
-        description = info?.description ?: "",
+        name = name.ifBlank { wikipediaExtracts?.title } ?: "",
+        description = if(info?.description.isNullOrEmpty()) wikipediaExtracts?.text ?: "" else info?.description!!,
         kinds = kinds.split(",").toList(),
         osm = osm ?: "",
         wikidata = wikidata ?: "",
         rate = rate,
         imageUrl = image ?: "",
-        previewUrl = preview?.source ?: "",
+        previewUrl = if(preview?.source.isNullOrEmpty()) image ?: "" else preview?.source!!,
         wikipediaUrl = wikipedia ?: "",
         wikipediaTitle = wikipediaExtracts?.title ?: "",
         wikipediaText = wikipediaExtracts?.text ?: "",

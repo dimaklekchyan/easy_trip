@@ -3,23 +3,23 @@ package ru.klekchyan.easytrip.main_ui.vm
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.yandex.mapkit.geometry.Point
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.klekchyan.easytrip.domain.entities.DetailedPlace
-import ru.klekchyan.easytrip.domain.useCases.AddFavoritePlaceUseCase
-import ru.klekchyan.easytrip.domain.useCases.DeleteFavoritePlaceUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetDetailedPlaceUseCase
-import ru.klekchyan.easytrip.domain.useCases.GetFavoritePlaceUseCase
+import ru.klekchyan.easytrip.domain.useCases.*
+import ru.klekchyan.easytrip.main_ui.utils.getDeltaBetweenPoints
 
 class DetailedPlaceModel(
     private val scope: CoroutineScope,
     private val getDetailedPlaceUseCase: GetDetailedPlaceUseCase,
     private val getFavoritePlaceUseCase: GetFavoritePlaceUseCase,
     private val addFavoritePlaceUseCase: AddFavoritePlaceUseCase,
-    private val deleteFavoritePlaceUseCase: DeleteFavoritePlaceUseCase
+    private val deleteFavoritePlaceUseCase: DeleteFavoritePlaceUseCase,
+    private val getCurrentUserLocationUseCase: GetCurrentUserLocationUseCase
 ) {
 
     var currentPlace by mutableStateOf<DetailedPlace?>(null)
@@ -59,8 +59,15 @@ class DetailedPlaceModel(
                     is GetDetailedPlaceUseCase.State.Error -> { /*TODO*/ }
                     is GetDetailedPlaceUseCase.State.Success -> {
                         val isFavorite = checkFavoritePlace(state.place.xid)
+                        val userLocation = getCurrentUserLocationUseCase().first()
+                        val distanceToUser: Double? = userLocation?.let {
+                            getDeltaBetweenPoints(
+                                point1 = Point(state.place.latitude ?: 0.0, state.place.longitude ?: 0.0),
+                                point2 = Point(userLocation.latitude, userLocation.longitude)
+                            )
+                        }
                         withContext(Dispatchers.Main) {
-                            currentPlace = state.place.copy(isFavorite = isFavorite)
+                            currentPlace = state.place.copy(isFavorite = isFavorite, distanceToUser = distanceToUser)
                         }
                     }
                 }

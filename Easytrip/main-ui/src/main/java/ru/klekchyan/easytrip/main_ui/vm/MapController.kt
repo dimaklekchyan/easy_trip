@@ -95,7 +95,7 @@ class MapController(
 
             val delta = getDeltaBetweenPoints(currentPoint, lastPoint)
 
-            if(delta > 1) {
+            if(delta > 1000) {
                 lastPoint = pos.target
                 getNewPlaces()
             }

@@ -55,7 +55,11 @@ dependencies {
     implementation "com.yandex.android:maps.mobile:$yandex_mapkit_version"
 
     //Accompanist
-    implementation "com.google.accompanist:accompanist-flowlayout:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-pager:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
+
+    //LazyStaggeredGrid
+    implementation 'com.github.nesyou01:LazyStaggeredGrid:1.2.0'
 
     //Coil
     implementation "io.coil-kt:coil-compose:$coil_version"

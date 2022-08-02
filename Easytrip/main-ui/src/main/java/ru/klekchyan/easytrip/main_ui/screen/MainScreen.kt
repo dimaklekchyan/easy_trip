@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.common.LocationRequester
 import ru.klekchyan.easytrip.common.checkLocationPermissions
+import ru.klekchyan.easytrip.main_ui.screen.bottomSheetContent.BottomSheetContent
+import ru.klekchyan.easytrip.main_ui.screen.bottomSheetContent.ModalSheetContentType
+import ru.klekchyan.easytrip.main_ui.screen.bottomSheetContent.rememberSheetContentHandler
 import ru.klekchyan.easytrip.main_ui.vm.MainViewModel
 import ru.klekchyan.easytrip.main_ui.vm.MapController
 

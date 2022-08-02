@@ -33,7 +33,8 @@ class MainViewModel @Inject constructor(
         getDetailedPlaceUseCase = getDetailedPlaceUseCase,
         getFavoritePlaceUseCase = getFavoritePlaceUseCase,
         addFavoritePlaceUseCase = addFavoritePlaceUseCase,
-        deleteFavoritePlaceUseCase = deleteFavoritePlaceUseCase
+        deleteFavoritePlaceUseCase = deleteFavoritePlaceUseCase,
+        getCurrentUserLocationUseCase = getCurrentUserLocationUseCase
     )
 
     val mapController = MapController(

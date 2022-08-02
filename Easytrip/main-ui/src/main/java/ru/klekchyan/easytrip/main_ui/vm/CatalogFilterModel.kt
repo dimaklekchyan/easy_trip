@@ -22,8 +22,6 @@ class CatalogFilterModel(
     private val getCatalogUseCase: GetCatalogUseCase
 ) {
 
-    var catalog by mutableStateOf<Catalog?>(null)
-        private set
     var currentKinds by mutableStateOf<List<String>>(emptyList())
         private set
     var categoriesGroup by mutableStateOf<List<CategoriesGroup>>(emptyList())
@@ -57,16 +55,16 @@ class CatalogFilterModel(
         result.await()
     }
 
-    suspend fun onTopCategoryClick(category: CatalogChild) {
+    suspend fun onGroupClick(group: CategoriesGroup) {
         val result = scope.async (Dispatchers.IO) {
             currentKinds.toMutableList().let { mutableList ->
-                val subcategoriesIds = categoriesGroup.first { it.num.first() == category.num.first() }.categories.map { it.id }
+                val subcategoriesIds = categoriesGroup.first { it.num.first() == group.num.first() }.categories.map { it.id }
 
-                if(mutableList.contains(category.id)) {
-                    mutableList.remove(category.id)
+                if(mutableList.contains(group.id)) {
+                    mutableList.remove(group.id)
                     mutableList.removeAll(subcategoriesIds)
                 } else {
-                    mutableList.add(category.id)
+                    mutableList.add(group.id)
                     mutableList.addAll(subcategoriesIds)
                 }
                 withContext(Dispatchers.Main) {
@@ -86,16 +84,15 @@ class CatalogFilterModel(
                         is GetCatalogUseCase.State.Loading -> {}
                         is GetCatalogUseCase.State.Error -> {}
                         is GetCatalogUseCase.State.Success -> {
-                            catalog = state.catalog
-                            categoriesGroup = catalog?.children?.map {
+                            categoriesGroup = state.catalog.children.map {
                                 CategoriesGroup(
                                     id = it.id,
                                     name = it.name,
                                     num = it.num,
                                     categories = getAllCategories(it.children ?: emptyList())
                                 )
-                            } ?: emptyList()
-                            catalog?.children?.forEach { onTopCategoryClick(it) }
+                            }
+                            categoriesGroup.forEach { onGroupClick(it) }
                             mapController.onKindsChanged(currentKinds)
                         }
                     }
