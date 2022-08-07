@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import ru.klekchyan.easytrip.base_ui.theme.AppTheme
 import ru.klekchyan.easytrip.common.LocationRequester
 import ru.klekchyan.easytrip.common.checkLocationPermissions
 import ru.klekchyan.easytrip.main_ui.screen.bottomSheetContent.BottomSheetContent
@@ -178,7 +179,9 @@ internal fun ScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 value = searchText,
                 onValueChange = onSearchTextChanged,
-                colors = TextFieldDefaults.textFieldColors()
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = AppTheme.colors.primaryBackground
+                )
             )
         }
         Box(

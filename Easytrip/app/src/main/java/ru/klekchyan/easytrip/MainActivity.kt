@@ -7,16 +7,10 @@ import android.os.Bundle
 import android.os.IBinder
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Surface
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.yandex.mapkit.MapKitFactory
 import dagger.hilt.android.AndroidEntryPoint
 import ru.klekchyan.easytrip.base_ui.theme.EasyTripTheme
 import ru.klekchyan.easytrip.common.LocationRequester
-import ru.klekchyan.easytrip.main_ui.screen.MainScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity(), LocationRequester {
@@ -46,12 +40,7 @@ class MainActivity : ComponentActivity(), LocationRequester {
 
         setContent {
             EasyTripTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = Color.White
-                ) {
-                    MainScreen(hiltViewModel())
-                }
+                ApplicationScreen()
             }
         }
     }
