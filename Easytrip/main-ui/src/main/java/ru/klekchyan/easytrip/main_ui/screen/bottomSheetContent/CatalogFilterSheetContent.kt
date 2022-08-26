@@ -29,7 +29,10 @@ import com.nesyou.staggeredgrid.StaggeredCells
 import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.main_ui.vm.CatalogFilterModel
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalPagerApi::class)
+@OptIn(
+    ExperimentalMaterialApi::class,
+    ExperimentalPagerApi::class
+)
 @Composable
 internal fun CatalogFilterSheetContent(
     modifier: Modifier = Modifier,

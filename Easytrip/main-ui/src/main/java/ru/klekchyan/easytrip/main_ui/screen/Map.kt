@@ -1,6 +1,7 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
 import android.content.Context
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -10,11 +11,12 @@ import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
 import com.yandex.mapkit.map.MapObjectTapListener
+import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
-import ru.klekchyan.easytrip.common.getBitmapFromVectorDrawable
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.main_ui.R
+import ru.klekchyan.easytrip.main_ui.utils.PlaceMarkImageProvider
 import ru.klekchyan.easytrip.main_ui.utils.toPoint
 import ru.klekchyan.easytrip.main_ui.vm.MapController
 
@@ -25,8 +27,9 @@ fun Map(
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current.density
+    val isDarkTheme = isSystemInDarkTheme()
 
-    val mapView by remember { mutableStateOf(context.createMapView(mapController)) }
+    val mapView by remember { mutableStateOf(context.createMapView(mapController, isDarkTheme, density)) }
 
     DisposableEffect(key1 = Unit) {
         mapView.onStart()
@@ -45,28 +48,55 @@ fun Map(
     )
 }
 
-private fun Context.createMapView(mapController: MapController): MapView {
+private fun Context.createMapView(mapController: MapController, isDarkTheme: Boolean, density: Float): MapView {
     return MapView(this).apply {
+        //TODO Create appropriate styles
+        //map.setMapStyle(this@createMapView.getMapStyle(false))
+
         val clusterizedCollection = map.mapObjects.addClusterizedPlacemarkCollection(mapController)
 
-        mapController.setOnAddPlaceMark { place ->
+        mapController.setNewMaxZoom(map.maxZoom)
+        mapController.setNewMinZoom(map.minZoom)
+
+        mapController.setOnAddPlaceMark { place, isClicked ->
 
             var listener: MapObjectTapListener = MapObjectTapListener { _, _ -> false }
+            var placemarkMapObject: PlacemarkMapObject? = null
 
             clusterizedCollection.addPlacemark(
                 Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
-                ImageProvider.fromBitmap(this@createMapView.getBitmapFromVectorDrawable(place.icon)),
+                PlaceMarkImageProvider.getInstance(
+                    context = this@createMapView,
+                    place = place,
+                    density = density,
+                    isDarkTheme = isDarkTheme,
+                    isClicked = isClicked
+                )
             ).apply {
-
+                placemarkMapObject = this
                 listener = MapObjectTapListener { mapObject, _ ->
-                    mapController.onPlaceMarkClick(mapObject.userData as SimplePlace)
+                    mapController.onPlaceMarkClick(
+                        context = this@createMapView,
+                        place = mapObject.userData as SimplePlace,
+                        placeMarkMapObject = mapObject as PlacemarkMapObject,
+                        isDarkTheme = isDarkTheme
+                    )
+                    mapObject.setIcon(
+                        PlaceMarkImageProvider.getInstance(
+                            context = this@createMapView,
+                            place = place,
+                            density = density,
+                            isDarkTheme = isDarkTheme,
+                            isClicked = true
+                        )
+                    )
                     true
                 }
 
                 this.userData = place
                 this.addTapListener(listener)
             }
-            listener
+            placemarkMapObject to listener
         }
 
         mapController.setOnAddUserPlaceMark { location, oldMapObject ->
@@ -80,12 +110,12 @@ private fun Context.createMapView(mapController: MapController): MapView {
             clusterizedCollection.clear()
         }
         mapController.setOnClusterPlaceMarks {
-            clusterizedCollection.clusterPlacemarks(60.0, 14)
+            clusterizedCollection.clusterPlacemarks(60.0, 16)
         }
         mapController.setOnMoveTo { point, zoom ->
             map.move(
                 CameraPosition(point, zoom, 0f, 0f),
-                Animation(Animation.Type.SMOOTH, 2f),
+                Animation(Animation.Type.SMOOTH, 1.5f),
                 null
             )
         }

@@ -1,5 +1,8 @@
 package ru.klekchyan.easytrip.domain.entities
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class DetailedPlace(
     val xid: String,
     val name: String,

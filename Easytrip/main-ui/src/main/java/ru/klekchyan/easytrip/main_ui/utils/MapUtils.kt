@@ -1,6 +1,11 @@
 package ru.klekchyan.easytrip.main_ui.utils
 
+import android.content.Context
 import com.yandex.mapkit.geometry.Point
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -20,4 +25,27 @@ internal fun getDeltaBetweenPoints(point1: Point, point2: Point): Double {
 
 private fun deg2rad(deg: Double): Double {
     return deg * Math.PI / 180.0
+}
+
+private fun Context.readRawResource(name: String): String {
+    val builder = StringBuilder()
+    val resourceIdentifier: Int = resources.getIdentifier(name, "raw", packageName)
+    val inputStream: InputStream = resources.openRawResource(resourceIdentifier)
+    val reader = BufferedReader(InputStreamReader(inputStream))
+    try {
+        var line: String?
+        while (reader.readLine().also { line = it } != null) {
+            builder.append(line)
+        }
+    } catch (ex: IOException) {
+        throw ex
+    } finally {
+        reader.close()
+    }
+    return builder.toString()
+}
+
+internal fun Context.getMapStyle(isDarkTheme: Boolean): String {
+    //TODO Create appropriate styles
+    return readRawResource(if(isDarkTheme) "customization_example" else "customization_example")
 }

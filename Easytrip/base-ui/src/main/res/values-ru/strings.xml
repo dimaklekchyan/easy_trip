@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_name">Нет названия</string>
+    <string name="meters">м.</string>
+    <string name="kilometers">км.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_name">No name</string>
+    <string name="meters">m.</string>
+    <string name="kilometers">km.</string>
+</resources>

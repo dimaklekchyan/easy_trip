@@ -26,6 +26,16 @@ object AppTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalColorProvider.current
+
+    val shapes: Shapes
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalShapesProvider.current
+
+    val typography: Typography
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalTypographyProvider.current
 }
 
 val LocalColorProvider = staticCompositionLocalOf<Colors> {

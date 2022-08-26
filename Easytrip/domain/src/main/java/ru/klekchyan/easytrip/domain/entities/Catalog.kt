@@ -1,13 +1,17 @@
 package ru.klekchyan.easytrip.domain.entities
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import ru.klekchyan.easytrip.base_ui.theme.*
 
+@Immutable
 data class Catalog(
     val name: String,
     val num: String,
     val children: List<CatalogChild>
 )
 
+@Immutable
 data class CatalogChild(
     val id: String,
     val name: String,
@@ -15,12 +19,12 @@ data class CatalogChild(
     val children: List<CatalogChild>? = null
 ) {
     val color: Color = when {
-        num.startsWith("1") -> Color(0xFF5FB461)
-        num.startsWith("2") -> Color(0xFFF18B3D)
-        num.startsWith("3") -> Color(0xFF64C5F1)
-        num.startsWith("4") -> Color(0xFFE03462)
-        num.startsWith("5") -> Color(0xFFAFCB42)
-        num.startsWith("6") -> Color(0xFF353D8D)
-        else -> Color(0xFFDADADA)
+        num.startsWith("1") -> colorBlue
+        num.startsWith("2") -> colorOrange
+        num.startsWith("3") -> colorLightBlue
+        num.startsWith("4") -> colorRed
+        num.startsWith("5") -> colorLightDirtyGreen
+        num.startsWith("6") -> colorPurple
+        else -> colorBlue
     }
 }

@@ -1,13 +1,14 @@
 package ru.klekchyan.easytrip.common
 
+import android.content.Context
 import java.text.DecimalFormat
+import ru.klekchyan.easytrip.base_ui.R
 
-fun Double.toHumanDistanceFormat(): String = when {
-    this < 1000.0 -> this.toMetersFormat() + " m."
-    else -> (this / 1000).toKilometersFormat() + " km."
+fun Double.toHumanDistanceFormat(context: Context): String = when {
+    this < 1000.0 -> this.toMetersFormat() + " " + context.resources.getString(R.string.meters)
+    else -> (this / 1000.0).toKilometersFormat() + " " + context.resources.getString(R.string.kilometers)
 }
 
-fun Double.toKilometersFormat() = DecimalFormat("#,###.##").format(this).replace(',', ' ')
-    .replace('.', ',')
+private fun Double.toKilometersFormat() = DecimalFormat("#,###.##").format(this)
 
-private fun Double.toMetersFormat() = DecimalFormat("#,###").format(this).replace(',', ' ')
+private fun Double.toMetersFormat() = DecimalFormat("#,###").format(this)

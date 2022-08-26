@@ -1,5 +1,7 @@
 package ru.klekchyan.easytrip.main_ui.vm
 
+import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,10 +17,7 @@ import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.domain.useCases.GetCurrentUserLocationUseCase
 import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
 import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
-import ru.klekchyan.easytrip.main_ui.utils.ClusterImageProvider
-import ru.klekchyan.easytrip.main_ui.utils.getDeltaBetweenPoints
-import ru.klekchyan.easytrip.main_ui.utils.toPoint
-import ru.klekchyan.easytrip.main_ui.utils.toRequestFormat
+import ru.klekchyan.easytrip.main_ui.utils.*
 
 class MapController(
     private val scope: CoroutineScope,
@@ -36,19 +35,23 @@ class MapController(
     private var currentRadius by mutableStateOf(0.0)
     private var lastPoint by mutableStateOf(Point(0.0, 0.0))
     private var currentPoint by mutableStateOf(Point(0.0, 0.0))
-    private var currentZoom by mutableStateOf(14f)
+    private var currentZoom by mutableStateOf(0f)
+    private var maxZoom by mutableStateOf(0f)
+    private var minZoom by mutableStateOf(0f)
     var currentSearchQuery by mutableStateOf("")
         private set
     private var currentKinds by mutableStateOf<List<String>>(emptyList())
 
     private var onMoveTo: (point: Point, zoom: Float) -> Unit = { _, _ -> }
-    private var onAddPlaceMark: ((place: SimplePlace) -> MapObjectTapListener) = { MapObjectTapListener { _, _ -> false} }
+    private var onAddPlaceMark: ((place: SimplePlace, isClicked: Boolean) -> Pair<PlacemarkMapObject?, MapObjectTapListener?>) = { _, _ -> null to null }
     private var onAddUserPlaceMark: (location: CurrentUserLocation, mapObject: PlacemarkMapObject?) -> PlacemarkMapObject? = { _, _ -> null }
     private var onDeletePlaceMarks: () -> Unit = {}
     private var onClusterPlaceMarks: () -> Unit = {}
 
     private var listeners by mutableStateOf<List<MapObjectTapListener>>(listOf())
     private var userPlacemarkMapObject by mutableStateOf<PlacemarkMapObject?>(null)
+    private var clickedPlaceMarkObject by mutableStateOf<PlacemarkMapObject?>(null)
+    private var clickedPlace by mutableStateOf<SimplePlace?>(null)
 
     init {
         getCurrentUserLocation()
@@ -58,7 +61,7 @@ class MapController(
         onMoveTo = callback
     }
 
-    fun setOnAddPlaceMark(callback: (place: SimplePlace) -> MapObjectTapListener) {
+    fun setOnAddPlaceMark(callback: (place: SimplePlace, isClicked: Boolean) -> Pair<PlacemarkMapObject?, MapObjectTapListener?>) {
         onAddPlaceMark = callback
     }
 
@@ -74,12 +77,29 @@ class MapController(
         onClusterPlaceMarks = callback
     }
 
-    fun onPlaceMarkClick(place: SimplePlace) {
+    fun onPlaceMarkClick(
+        context: Context,
+        place: SimplePlace,
+        placeMarkMapObject: PlacemarkMapObject,
+        isDarkTheme: Boolean
+    ) {
+        onClearClickedPlace(isDarkTheme, context)
         onDetailedPlaceClick(place.xid)
+        clickedPlace = place
+        clickedPlaceMarkObject = placeMarkMapObject
     }
 
     fun setNewDensity(value: Float) {
         density = value
+    }
+
+    fun setNewMaxZoom(value: Float) {
+        maxZoom = value
+    }
+
+    fun setNewMinZoom(value: Float) {
+        minZoom = value
+        currentZoom = minZoom
     }
 
     override fun onCameraPositionChanged(
@@ -113,7 +133,7 @@ class MapController(
     }
 
     override fun onClusterTap(cluster: Cluster): Boolean {
-        //TODO
+        onMoveTo(cluster.appearance.geometry, (currentZoom + 1).coerceAtMost(maxZoom))
         return true
     }
 
@@ -129,11 +149,39 @@ class MapController(
 
     fun moveToUserLocation() {
         if(userLocation != null) {
-            onMoveTo(userLocation!!.toPoint(), currentZoom)
+            onMoveTo(userLocation!!.toPoint(), currentZoom.coerceAtLeast(MIN_CURRENT_LOCATION_ZOOM))
             drawUserPlacemark = true
             moveToUserWhenLocationWillBeReceived = false
         } else {
             moveToUserWhenLocationWillBeReceived = true
+        }
+    }
+
+    fun increaseZoom() {
+        onMoveTo(currentPoint, (currentZoom + 1).coerceAtMost(maxZoom))
+    }
+
+    fun decreaseZoom() {
+        onMoveTo(currentPoint, (currentZoom - 1).coerceAtLeast(minZoom))
+    }
+
+    fun onClearClickedPlace(isDarkTheme: Boolean, context: Context) {
+        try {
+            clickedPlace?.let { place ->
+                clickedPlaceMarkObject?.setIcon(
+                    PlaceMarkImageProvider.getInstance(
+                        context = context,
+                        place = place,
+                        density = density,
+                        isDarkTheme = isDarkTheme,
+                        isClicked = false
+                    )
+                )
+            }
+            clickedPlace = null
+            clickedPlaceMarkObject = null
+        } catch (e: RuntimeException) {
+            Log.d("TAG2", "error: ${e.cause}")
         }
     }
 
@@ -219,21 +267,32 @@ class MapController(
             onDeletePlaceMarks()
             deleteAllTapListeners()
             places.forEach { place ->
-                val listener = onAddPlaceMark(place)
+                val (_, listener) = onAddPlaceMark(place, false)
+                saveTapListener(listener)
+            }
+            clickedPlace?.let { place ->
+                val (mapObject, listener) = onAddPlaceMark(place, true)
+                clickedPlaceMarkObject = mapObject
                 saveTapListener(listener)
             }
             onClusterPlaceMarks()
         }
     }
 
-    private fun saveTapListener(listener: MapObjectTapListener) {
+    private fun saveTapListener(listener: MapObjectTapListener?) {
         listeners.toMutableList().let { mutableList ->
-            mutableList.add(listener)
-            listeners = mutableList
+            listener?.let {
+                mutableList.add(listener)
+                listeners = mutableList
+            }
         }
     }
 
     private fun deleteAllTapListeners() {
         listeners = listOf()
+    }
+
+    companion object {
+        private const val MIN_CURRENT_LOCATION_ZOOM = 14F
     }
 }
