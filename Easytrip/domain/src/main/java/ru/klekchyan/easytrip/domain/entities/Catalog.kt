@@ -18,7 +18,7 @@ data class CatalogChild(
     val num: String,
     val children: List<CatalogChild>? = null
 ) {
-    val color: Color = when {
+    val backgroundColor: Color = when {
         num.startsWith("1") -> colorBlue
         num.startsWith("2") -> colorOrange
         num.startsWith("3") -> colorLightBlue
@@ -27,4 +27,6 @@ data class CatalogChild(
         num.startsWith("6") -> colorPurple
         else -> colorBlue
     }
+    val textOnBackgroundColor: Color =
+        if(backgroundColor == colorLightDirtyGreen) Color.Black else Color.White
 }

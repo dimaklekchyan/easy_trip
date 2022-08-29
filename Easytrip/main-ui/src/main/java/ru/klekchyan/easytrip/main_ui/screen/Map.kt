@@ -63,9 +63,8 @@ private fun Context.createMapView(mapController: MapController, isDarkTheme: Boo
         mapController.setOnAddPlaceMark { place, isClicked ->
 
             var listener: MapObjectTapListener = MapObjectTapListener { _, _ -> false }
-            var placemarkMapObject: PlacemarkMapObject? = null
 
-            clusterizedCollection.addPlacemark(
+            val placemarkMapObject = clusterizedCollection.addPlacemark(
                 Point(place.latitude ?: 0.0, place.longitude ?: 0.0),
                 PlaceMarkImageProvider.getInstance(
                     context = this@createMapView,
@@ -75,7 +74,6 @@ private fun Context.createMapView(mapController: MapController, isDarkTheme: Boo
                     isClicked = isClicked
                 )
             ).apply {
-                placemarkMapObject = this
                 listener = MapObjectTapListener { mapObject, _ ->
                     mapController.onPlaceMarkClick(
                         context = this@createMapView,
@@ -102,15 +100,13 @@ private fun Context.createMapView(mapController: MapController, isDarkTheme: Boo
         }
 
 //        mapController.setOnRemovePlaceMark { mapObject, listener ->
-//            try {
-//                listener?.let {
-//                    clusterizedCollection.parent.parent.removeTapListener(it)
-//                }
-//                mapObject?.let {
-//                    clusterizedCollection.parent.parent.remove(it)
-//                }
-//            } catch (ex: RuntimeException) {
-//                Log.d("TAG2", "ex: ${ex}")
+//            listener?.let {
+//                //clusterizedCollection.removeTapListener(it)
+//                clusterizedCollection.parent.removeTapListener(it)
+//            }
+//            mapObject?.let {
+//                //clusterizedCollection.remove(it)
+//                clusterizedCollection.parent.remove(it)
 //            }
 //        }
 

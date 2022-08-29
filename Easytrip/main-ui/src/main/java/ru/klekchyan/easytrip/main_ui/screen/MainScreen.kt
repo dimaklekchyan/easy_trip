@@ -106,6 +106,7 @@ fun MainScreen(
     }
 
     ModalBottomSheetLayout(
+        modifier = Modifier.fillMaxSize(),
         sheetContent = {
             BottomSheetContent(
                 handler = sheetContentHandler

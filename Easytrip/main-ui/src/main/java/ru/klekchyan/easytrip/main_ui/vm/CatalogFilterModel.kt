@@ -3,8 +3,9 @@ package ru.klekchyan.easytrip.main_ui.vm
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.*
-import ru.klekchyan.easytrip.domain.entities.Catalog
+import ru.klekchyan.easytrip.base_ui.theme.colorBlue
 import ru.klekchyan.easytrip.domain.entities.CatalogChild
 import ru.klekchyan.easytrip.domain.useCases.GetCatalogUseCase
 
@@ -13,6 +14,8 @@ data class CategoriesGroup(
     val name: String,
     val num: String,
     val categories: List<CatalogChild>,
+    val backgroundColor: Color,
+    val textOnBackgroundColor: Color,
     val isEnabled: Boolean = false
 )
 
@@ -85,11 +88,14 @@ class CatalogFilterModel(
                         is GetCatalogUseCase.State.Error -> {}
                         is GetCatalogUseCase.State.Success -> {
                             categoriesGroup = state.catalog.children.map {
+                                val categories = getAllCategories(it.children ?: emptyList())
                                 CategoriesGroup(
                                     id = it.id,
                                     name = it.name,
                                     num = it.num,
-                                    categories = getAllCategories(it.children ?: emptyList())
+                                    categories = categories,
+                                    backgroundColor = categories.firstOrNull()?.backgroundColor ?: colorBlue,
+                                    textOnBackgroundColor = categories.firstOrNull()?.textOnBackgroundColor ?: Color.White
                                 )
                             }
                             categoriesGroup.forEach { onGroupClick(it) }
