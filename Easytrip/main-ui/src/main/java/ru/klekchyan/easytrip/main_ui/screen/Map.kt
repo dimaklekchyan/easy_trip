@@ -1,6 +1,7 @@
 package ru.klekchyan.easytrip.main_ui.screen
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -10,6 +11,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.geometry.Point
 import com.yandex.mapkit.map.CameraPosition
+import com.yandex.mapkit.map.MapObject
 import com.yandex.mapkit.map.MapObjectTapListener
 import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
@@ -98,6 +100,19 @@ private fun Context.createMapView(mapController: MapController, isDarkTheme: Boo
             }
             placemarkMapObject to listener
         }
+
+//        mapController.setOnRemovePlaceMark { mapObject, listener ->
+//            try {
+//                listener?.let {
+//                    clusterizedCollection.parent.parent.removeTapListener(it)
+//                }
+//                mapObject?.let {
+//                    clusterizedCollection.parent.parent.remove(it)
+//                }
+//            } catch (ex: RuntimeException) {
+//                Log.d("TAG2", "ex: ${ex}")
+//            }
+//        }
 
         mapController.setOnAddUserPlaceMark { location, oldMapObject ->
             oldMapObject?.let {

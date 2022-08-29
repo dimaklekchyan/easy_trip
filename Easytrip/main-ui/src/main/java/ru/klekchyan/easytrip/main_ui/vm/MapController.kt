@@ -19,6 +19,13 @@ import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusAndNameUseCase
 import ru.klekchyan.easytrip.domain.useCases.GetPlacesByRadiusUseCase
 import ru.klekchyan.easytrip.main_ui.utils.*
 
+data class PlaceMark(
+    val place: SimplePlace,
+    val mapObject: PlacemarkMapObject?,
+    val listener: MapObjectTapListener?,
+    val isClicked: Boolean
+)
+
 class MapController(
     private val scope: CoroutineScope,
     private val getPlacesByRadiusUseCase: GetPlacesByRadiusUseCase,
@@ -44,6 +51,7 @@ class MapController(
 
     private var onMoveTo: (point: Point, zoom: Float) -> Unit = { _, _ -> }
     private var onAddPlaceMark: ((place: SimplePlace, isClicked: Boolean) -> Pair<PlacemarkMapObject?, MapObjectTapListener?>) = { _, _ -> null to null }
+//    private var onRemovePlaceMark: (mapObject: PlacemarkMapObject?, listener: MapObjectTapListener?) -> Unit = { _, _ -> }
     private var onAddUserPlaceMark: (location: CurrentUserLocation, mapObject: PlacemarkMapObject?) -> PlacemarkMapObject? = { _, _ -> null }
     private var onDeletePlaceMarks: () -> Unit = {}
     private var onClusterPlaceMarks: () -> Unit = {}
@@ -52,6 +60,8 @@ class MapController(
     private var userPlacemarkMapObject by mutableStateOf<PlacemarkMapObject?>(null)
     private var clickedPlaceMarkObject by mutableStateOf<PlacemarkMapObject?>(null)
     private var clickedPlace by mutableStateOf<SimplePlace?>(null)
+
+//    private var placeMarks: MutableList<PlaceMark> = mutableListOf()
 
     init {
         getCurrentUserLocation()
@@ -64,6 +74,10 @@ class MapController(
     fun setOnAddPlaceMark(callback: (place: SimplePlace, isClicked: Boolean) -> Pair<PlacemarkMapObject?, MapObjectTapListener?>) {
         onAddPlaceMark = callback
     }
+
+//    fun setOnRemovePlaceMark(callback: (mapObject: PlacemarkMapObject?, listener: MapObjectTapListener?) -> Unit) {
+//        onRemovePlaceMark = callback
+//    }
 
     fun setOnAddUserPlaceMark(callback: (location: CurrentUserLocation, mapObject: PlacemarkMapObject?) -> PlacemarkMapObject) {
         onAddUserPlaceMark = callback
@@ -262,11 +276,11 @@ class MapController(
         }
     }
 
-    private suspend fun onGetPlaces(places: List<SimplePlace>) {
+    private suspend fun onGetPlaces(newPlaces: List<SimplePlace>) {
         withContext(Dispatchers.Main) {
             onDeletePlaceMarks()
             deleteAllTapListeners()
-            places.forEach { place ->
+            newPlaces.forEach { place ->
                 val (_, listener) = onAddPlaceMark(place, false)
                 saveTapListener(listener)
             }
@@ -277,6 +291,25 @@ class MapController(
             }
             onClusterPlaceMarks()
         }
+
+//        withContext(Dispatchers.Default) {
+//            val placesToRemove = placeMarks.filter { !it.isClicked }.map { it.place }.minus(newPlaces.toSet())
+//            val placesToAdd = newPlaces.minus(placeMarks.map { it.place }.toSet())
+//
+//            withContext(Dispatchers.Main) {
+//                placesToAdd.forEach { place ->
+//                    val (mapObject, listener) = onAddPlaceMark(place, false)
+//                    placeMarks.add(PlaceMark(place, mapObject, listener, false))
+//                }
+//                placesToRemove.forEach { place ->
+//                    val placeMark = placeMarks.firstOrNull { it.place.xid == place.xid }
+//                    placeMark?.let {
+//                        onRemovePlaceMark(placeMark.mapObject, placeMark.listener)
+//                    }
+//                }
+//                onClusterPlaceMarks()
+//            }
+//        }
     }
 
     private fun saveTapListener(listener: MapObjectTapListener?) {
