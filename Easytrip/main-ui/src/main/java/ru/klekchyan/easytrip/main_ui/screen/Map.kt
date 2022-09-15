@@ -111,8 +111,12 @@ private fun Context.createMapView(mapController: MapController, isDarkTheme: Boo
 //        }
 
         mapController.setOnAddUserPlaceMark { location, oldMapObject ->
-            oldMapObject?.let {
-                map.mapObjects.remove(oldMapObject)
+            try {
+                oldMapObject?.let {
+                    map.mapObjects.remove(oldMapObject)
+                }
+            } catch (ex: RuntimeException) {
+                //TODO
             }
             map.mapObjects.addPlacemark(location.toPoint(), ImageProvider.fromResource(context, R.drawable.search_result))
         }

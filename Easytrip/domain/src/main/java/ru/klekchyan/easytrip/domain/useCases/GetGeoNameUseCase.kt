@@ -3,8 +3,9 @@ package ru.klekchyan.easytrip.domain.useCases
 import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.domain.entities.GeoName
 import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
+import javax.inject.Inject
 
-class GetGeoNameUseCase(
+class GetGeoNameUseCase @Inject constructor(
     private val placesRepository: PlacesRepository
 ) {
     operator fun invoke(name: String) = placesRepository.getPlaceGeoNameFlow(name).map {

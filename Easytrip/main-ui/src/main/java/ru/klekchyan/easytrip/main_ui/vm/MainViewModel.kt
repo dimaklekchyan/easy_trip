@@ -11,22 +11,21 @@ import kotlinx.coroutines.launch
 import ru.klekchyan.easytrip.domain.repositories.LocationRepository
 import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
 import ru.klekchyan.easytrip.domain.useCases.*
+import ru.klekchyan.easytrip.navigation.NavigationManager
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    placesRepository: PlacesRepository,
-    locationRepository: LocationRepository
+    private val navigationManager: NavigationManager,
+    getPlacesByRadiusUseCase: GetPlacesByRadiusUseCase,
+    getPlacesByRadiusAndNameUseCase: GetPlacesByRadiusAndNameUseCase,
+    getDetailedPlaceUseCase: GetDetailedPlaceUseCase,
+    getCatalogUseCase: GetCatalogUseCase,
+    getCurrentUserLocationUseCase: GetCurrentUserLocationUseCase,
+    getFavoritePlaceUseCase: GetFavoritePlaceUseCase,
+    addFavoritePlaceUseCase: AddFavoritePlaceUseCase,
+    deleteFavoritePlaceUseCase: DeleteFavoritePlaceUseCase
 ): ViewModel() {
-
-    private val getPlacesByRadiusUseCase = GetPlacesByRadiusUseCase(placesRepository)
-    private val getPlacesByRadiusAndNameUseCase = GetPlacesByRadiusAndNameUseCase(placesRepository)
-    private val getDetailedPlaceUseCase = GetDetailedPlaceUseCase(placesRepository)
-    private val getCatalogUseCase = GetCatalogUseCase(placesRepository)
-    private val getCurrentUserLocationUseCase = GetCurrentUserLocationUseCase(locationRepository)
-    private val getFavoritePlaceUseCase = GetFavoritePlaceUseCase(placesRepository)
-    private val addFavoritePlaceUseCase = AddFavoritePlaceUseCase(placesRepository)
-    private val deleteFavoritePlaceUseCase = DeleteFavoritePlaceUseCase(placesRepository)
 
     val detailedPlaceModel = DetailedPlaceModel(
         scope = viewModelScope,
@@ -65,6 +64,10 @@ class MainViewModel @Inject constructor(
             _searchQuery.emit(search)
         }
     }
+
+//    fun navigateToDetailedPlaceScreen(xid: String) {
+//        navigationManager.navigate()
+//    }
 
     private fun observeSearchQuery() {
         viewModelScope.launch(Dispatchers.IO) {

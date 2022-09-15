@@ -3,8 +3,9 @@ package ru.klekchyan.easytrip.domain.useCases
 import kotlinx.coroutines.flow.map
 import ru.klekchyan.easytrip.domain.entities.SimplePlace
 import ru.klekchyan.easytrip.domain.repositories.PlacesRepository
+import javax.inject.Inject
 
-class GetPlacesByRadiusAndNameUseCase(
+class GetPlacesByRadiusAndNameUseCase @Inject constructor(
     private val placesRepository: PlacesRepository
 ) {
 
